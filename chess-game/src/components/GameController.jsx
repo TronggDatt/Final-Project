@@ -66,15 +66,21 @@ class GameController extends React.Component {
     if (!gameState[fromKey]) return;
 
     // Kiểm tra nước đi hợp lệ
-    const validMoves = this.getValidMoves(from);
-    const isValidMove = validMoves.some(
-      (move) => move.row === to.row && move.col === to.col
-    );
-    if (!isValidMove) return; // Nếu không hợp lệ thì thoát luôn
+    const movingPiece = gameState[fromKey];
+    const targetPiece = gameState[toKey];
+
+    // 🚀 Kiểm tra xem quân cờ đích có phải là quân đối phương không
+    if (targetPiece && movingPiece[3] === targetPiece[3]) {
+      return;
+    }
 
     const newGameState = { ...gameState };
-    newGameState[toKey] = newGameState[fromKey];
-    delete newGameState[fromKey];
+    if (targetPiece) {
+      console.log(`Captured: ${targetPiece}`); // Debug để xem có ăn được quân không
+      delete newGameState[toKey]; // Xóa quân cờ bị ăn
+    }
+    newGameState[toKey] = movingPiece; // Đặt quân cờ vào vị trí mới
+    delete newGameState[fromKey]; // Xóa vị trí c
 
     this.setState({ gameState: newGameState, selectedPiece: null });
   };
@@ -88,16 +94,25 @@ class GameController extends React.Component {
     if (!piece) return []; // Nếu không có quân cờ, không có nước đi
 
     const moves = [];
+    const direction = piece.includes("_r") ? 1 : -1;
 
     // Ví dụ: nếu là tốt (tot_r hoặc tot_b)
-    if (piece.includes("tot")) {
-      const direction = piece.includes("_r") ? 1 : -1; // Tốt đỏ đi xuống, tốt đen đi lên
-      const newRow = row + direction;
-      const newKey = `${col}${newRow}`;
-      if (!gameState[newKey]) {
-        moves.push({ row: newRow, col }); // Có thể đi thẳng nếu ô trống
-      }
+    const newRow = row + direction;
+    const newKey = `${col}${newRow}`;
+    if (!gameState[newKey]) {
+      moves.push({ row: newRow, col });
     }
+
+    // ✅ Kiểm tra hai ô chéo để ăn quân đối phương
+    [col - 1, col + 1].forEach((newCol) => {
+      const attackKey = `${newCol}${newRow}`;
+      if (
+        gameState[attackKey] &&
+        gameState[attackKey].split("_")[1] !== piece.split("_")[1]
+      ) {
+        moves.push({ row: newRow, col: newCol });
+      }
+    });
 
     return moves; // Trả về danh sách nước đi hợp lệ
   };

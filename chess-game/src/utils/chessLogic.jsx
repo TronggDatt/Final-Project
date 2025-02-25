@@ -1,5 +1,3 @@
-// utils/chessLogic.js
-
 export const PIECES = {
   xe: "Rook",
   ma: "Knight",
@@ -25,17 +23,20 @@ export const isValidMove = (board, from, to, piece) => {
   switch (type) {
     case "xe": // Xe (Rook) đi ngang hoặc dọc không bị cản
       return fromRow === toRow || fromCol === toCol;
+
     case "ma": // Mã (Knight) đi hình chữ L, không bị cản
       return (
         (Math.abs(fromRow - toRow) === 2 && Math.abs(fromCol - toCol) === 1) ||
         (Math.abs(fromRow - toRow) === 1 && Math.abs(fromCol - toCol) === 2)
       );
+
     case "tinh": // Tượng (Elephant) chỉ đi chéo 2 ô
       return (
         Math.abs(fromRow - toRow) === 2 &&
         Math.abs(fromCol - toCol) === 2 &&
         ((color === "r" && toRow <= 4) || (color === "b" && toRow >= 5))
       );
+
     case "sy": // Sĩ (Advisor) đi chéo 1 ô, trong cung
       return (
         Math.abs(fromRow - toRow) === 1 &&
@@ -43,18 +44,23 @@ export const isValidMove = (board, from, to, piece) => {
         ((color === "r" && toRow >= 7 && toCol >= 3 && toCol <= 5) ||
           (color === "b" && toRow <= 2 && toCol >= 3 && toCol <= 5))
       );
+
     case "tuong": // Tướng (King) đi 1 ô trong cung
       return (
         Math.abs(fromRow - toRow) + Math.abs(fromCol - toCol) === 1 &&
         ((color === "r" && toRow >= 7 && toCol >= 3 && toCol <= 5) ||
           (color === "b" && toRow <= 2 && toCol >= 3 && toCol <= 5))
       );
+
     case "phao": // Pháo (Cannon) đi như Xe nhưng phải nhảy nếu ăn
       return fromRow === toRow || fromCol === toCol; // (Chưa kiểm tra nhảy)
+
     case "tot": // Tốt (Pawn) tiến 1 ô, nếu qua sông có thể đi ngang
-      if (color === "r")
+      if (color === "r") {
         return toRow - fromRow === 1 || (fromRow > 4 && fromCol !== toCol);
+      }
       return fromRow - toRow === 1 || (fromRow < 5 && fromCol !== toCol);
+
     default:
       return false;
   }

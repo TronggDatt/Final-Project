@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Piece from "./Piece";
 // import boardImage from "../public/assets/tables/table.png";
 
-const Board = ({ gameState, setGameState, getValidMoves, onPieceClick }) => {
+const Board = ({ gameState, setGameState, getValidMoves }) => {
   const [selectedPiece, setSelectedPiece] = useState(null);
   const [validMoves, setValidMoves] = useState([]);
 
@@ -10,25 +10,50 @@ const Board = ({ gameState, setGameState, getValidMoves, onPieceClick }) => {
     const key = `${col}${row}`;
     const piece = gameState[key];
 
-    if (piece) {
-      // Nếu có quân cờ -> chọn nó & lấy nước đi hợp lệ
-      setSelectedPiece({ row, col });
-      setValidMoves(getValidMoves({ row, col })); // Gọi hàm tính nước đi hợp lệ
-    } else if (selectedPiece) {
+    if (selectedPiece) {
       const moveAllowed = validMoves.some(
         (move) => move.row === row && move.col === col
       );
 
       if (moveAllowed) {
-        const newGameState = { ...gameState };
         const prevKey = `${selectedPiece.col}${selectedPiece.row}`;
-        delete newGameState[prevKey]; // Xóa quân cũ
-        newGameState[`${col}${row}`] = gameState[prevKey]; // Cập nhật quân cờ
+        const newKey = `${col}${row}`;
+        const movingPiece = gameState[prevKey];
 
-        setGameState(newGameState);
+        if (!movingPiece) return;
+
+        const newGameState = { ...gameState };
+
+        if (newGameState[newKey]) {
+          const capturedPiece = newGameState[newKey];
+
+          // 🔥 Kiểm tra nếu quân bị ăn là quân đối phương
+          if (capturedPiece.color !== movingPiece.color) {
+            delete newGameState[newKey]; // Xóa quân đối phương
+          } else {
+            console.log("Cannot capture same color piece!");
+            return;
+          }
+        }
+
+        // 🔥 Cập nhật đúng cách để React re-render
+        const updatedGameState = { ...newGameState };
+        updatedGameState[newKey] = movingPiece;
+        delete updatedGameState[prevKey];
+
+        setGameState(updatedGameState); // 🚀 Cập nhật state mới
+
         setSelectedPiece(null);
         setValidMoves([]);
       }
+    } else if (piece) {
+      const valid = getValidMoves({ row, col });
+
+      if (!Array.isArray(valid)) {
+        return;
+      }
+      setSelectedPiece({ row, col, piece });
+      setValidMoves(valid);
     }
   };
 
@@ -42,7 +67,7 @@ const Board = ({ gameState, setGameState, getValidMoves, onPieceClick }) => {
     return (
       <div
         key={key}
-        className={`w-15 h-14 flex justify-center items-center ${
+        className={`w-16 h-16 flex justify-center items-center ${
           isValidMove ? "bg-yellow-300" : ""
         }`}
         onClick={() => handlePieceClick(row, col)} // Cập nhật gọi đúng
@@ -51,7 +76,7 @@ const Board = ({ gameState, setGameState, getValidMoves, onPieceClick }) => {
           <Piece
             type={piece}
             position={{ row, col }}
-            onClick={handlePieceClick}
+            onClick={() => handlePieceClick(row, col)}
           />
         )}
       </div>

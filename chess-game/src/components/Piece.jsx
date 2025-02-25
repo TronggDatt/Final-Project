@@ -11,6 +11,7 @@ const Piece = ({ type, position, onClick }) => {
         src={`../assets/pieces/${type}.png`}
         alt={type}
         className="w-full h-full object-contain"
+        onClick={() => onClick(position.row, position.col)} // ✅ Truyền đúng row, col
       />
     </div>
   );
