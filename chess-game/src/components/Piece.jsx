@@ -1,6 +1,5 @@
 // src/components/Piece.jsx
 import React from "react";
-// import { PIECES, COLORS } from "../utils/chessLogic";
 
 const Piece = ({ type, position, onClick }) => {
   return (

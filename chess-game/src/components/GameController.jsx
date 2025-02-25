@@ -63,22 +63,54 @@ class GameController extends React.Component {
     const fromKey = `${from.col}${from.row}`;
     const toKey = `${to.col}${to.row}`;
 
-    if (!gameState[fromKey]) return; // Nếu ô trống, không làm gì
+    if (!gameState[fromKey]) return;
 
-    // Tạo bản sao của gameState và di chuyển quân cờ
+    // Kiểm tra nước đi hợp lệ
+    const validMoves = this.getValidMoves(from);
+    const isValidMove = validMoves.some(
+      (move) => move.row === to.row && move.col === to.col
+    );
+    if (!isValidMove) return; // Nếu không hợp lệ thì thoát luôn
+
     const newGameState = { ...gameState };
-    newGameState[toKey] = newGameState[fromKey]; // Đặt quân cờ vào vị trí mới
-    delete newGameState[fromKey]; // Xóa quân cờ khỏi vị trí cũ
+    newGameState[toKey] = newGameState[fromKey];
+    delete newGameState[fromKey];
 
     this.setState({ gameState: newGameState, selectedPiece: null });
+  };
+
+  getValidMoves = (position) => {
+    const { gameState } = this.state;
+    const { row, col } = position;
+    const key = `${col}${row}`;
+    const piece = gameState[key];
+
+    if (!piece) return []; // Nếu không có quân cờ, không có nước đi
+
+    const moves = [];
+
+    // Ví dụ: nếu là tốt (tot_r hoặc tot_b)
+    if (piece.includes("tot")) {
+      const direction = piece.includes("_r") ? 1 : -1; // Tốt đỏ đi xuống, tốt đen đi lên
+      const newRow = row + direction;
+      const newKey = `${col}${newRow}`;
+      if (!gameState[newKey]) {
+        moves.push({ row: newRow, col }); // Có thể đi thẳng nếu ô trống
+      }
+    }
+
+    return moves; // Trả về danh sách nước đi hợp lệ
   };
 
   render() {
     return (
       <div className="flex flex-col items-center mt-10">
         <Board
-          onPieceClick={this.handlePieceClick}
           gameState={this.state.gameState}
+          setGameState={(newGameState) =>
+            this.setState({ gameState: newGameState })
+          }
+          getValidMoves={this.getValidMoves} // ✅ Truyền hàm xuống Board.jsx
         />
       </div>
     );
