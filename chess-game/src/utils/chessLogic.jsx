@@ -69,19 +69,24 @@ const isValidKnightMove = (from, to) => {
 
 // Kiểm tra nước đi hợp lệ của Tốt
 const isValidPawnMove = (piece, from, to) => {
-  const color = piece.slice(-1);
+  const color = piece.slice(-1); // 'r' hoặc 'b'
   const isRed = color === "r";
-  const forwardDirection = isRed ? 1 : -1;
-  const riverBoundary = isRed ? 4 : 5;
+  const forwardDirection = isRed ? 1 : -1; // Đỏ tiến xuống, Đen tiến lên
+  const riverBoundary = isRed ? 4 : 5; // Hàng sông
 
-  const isForwardMove =
+  const isOneStepForward =
     to.row === from.row + forwardDirection && to.col === from.col;
-  const isSideMove =
-    from.row > riverBoundary &&
-    Math.abs(to.col - from.col) === 1 &&
-    to.row === from.row;
+  const isOneStepSide =
+    Math.abs(to.col - from.col) === 1 && to.row === from.row;
 
-  return isForwardMove || isSideMove;
+  if (
+    (isRed && from.row <= riverBoundary) ||
+    (!isRed && from.row >= riverBoundary)
+  ) {
+    return isOneStepForward; // Chưa qua sông chỉ đi thẳng
+  }
+
+  return isOneStepForward || isOneStepSide; // Qua sông có thể đi ngang
 };
 
 // Kiểm tra nước đi hợp lệ của Pháo

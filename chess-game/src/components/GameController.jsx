@@ -1,5 +1,6 @@
 import React from "react";
 import Board from "./Board";
+import { convertGameStateToBoard, getValidMoves } from "../utils/chessLogic";
 
 const INITIAL_GAME_STATE = {
   "00": "xe_r",
@@ -42,6 +43,7 @@ class GameController extends React.Component {
     this.state = {
       gameState: { ...INITIAL_GAME_STATE },
       selectedPiece: null,
+      validMoves: [],
     };
   }
 
@@ -52,14 +54,33 @@ class GameController extends React.Component {
     if (selectedPiece) {
       this.movePiece(selectedPiece, { row, col });
     } else if (gameState[key]) {
-      this.setState({ selectedPiece: { row, col } });
+      // Lấy danh sách nước đi hợp lệ từ chessLogic.jsx
+      const board = convertGameStateToBoard(gameState);
+      const piece = gameState[key];
+      const validMoves = getValidMoves(board, { row, col }, piece);
+
+      this.setState({ selectedPiece: { row, col }, validMoves });
     }
   };
 
   movePiece = (from, to) => {
-    const { gameState } = this.state;
+    const { gameState, validMoves } = this.state;
+    console.log("Valid Moves:", validMoves);
     const fromKey = `${from.col}${from.row}`;
     const toKey = `${to.col}${to.row}`;
+
+    // if (
+    //   !Array.isArray(validMoves) ||
+    //   !validMoves.some(([r, c]) => r === to.row && c === to.col)
+    // ) {
+    //   console.log("Invalid move!");
+    //   return;
+    // }
+
+    // if (!validMoves.some(([r, c]) => r === to.row && c === to.col)) {
+    //   console.log("Invalid move!", to);
+    //   return;
+    // }
 
     if (!gameState[fromKey]) return;
 
@@ -71,14 +92,17 @@ class GameController extends React.Component {
       targetPiece &&
       movingPiece.split("_")[1] === targetPiece.split("_")[1]
     ) {
-      console.log("Cannot capture same color piece!");
       return;
     }
     const newGameState = { ...gameState };
     delete newGameState[fromKey]; // Xóa quân cờ khỏi vị trí cũ
     newGameState[toKey] = movingPiece; // Đặt quân vào vị trí mới
 
-    this.setState({ gameState: newGameState, selectedPiece: null });
+    this.setState({
+      gameState: newGameState,
+      selectedPiece: null,
+      validMoves: [],
+    });
   };
 
   render() {
@@ -87,6 +111,7 @@ class GameController extends React.Component {
         <Board
           gameState={this.state.gameState}
           onSquareClick={this.handleSquareClick}
+          validMoves={this.state.validMoves}
         />
       </div>
     );
