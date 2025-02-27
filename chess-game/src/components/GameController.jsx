@@ -40,21 +40,19 @@ class GameController extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      gameState: { ...INITIAL_GAME_STATE }, // Lưu trạng thái bàn cờ
-      selectedPiece: null, // Lưu quân cờ đang được chọn
+      gameState: { ...INITIAL_GAME_STATE },
+      selectedPiece: null,
     };
   }
 
-  handlePieceClick = (position) => {
+  handleSquareClick = (row, col) => {
     const { selectedPiece, gameState } = this.state;
-    const key = `${position.col}${position.row}`;
+    const key = `${col}${row}`;
 
     if (selectedPiece) {
-      // Nếu đã chọn quân cờ trước đó, thử di chuyển
-      this.movePiece(selectedPiece, position);
+      this.movePiece(selectedPiece, { row, col });
     } else if (gameState[key]) {
-      // Nếu ô có quân cờ, chọn nó
-      this.setState({ selectedPiece: position });
+      this.setState({ selectedPiece: { row, col } });
     }
   };
 
@@ -65,56 +63,22 @@ class GameController extends React.Component {
 
     if (!gameState[fromKey]) return;
 
-    // Kiểm tra nước đi hợp lệ
     const movingPiece = gameState[fromKey];
     const targetPiece = gameState[toKey];
 
-    // 🚀 Kiểm tra xem quân cờ đích có phải là quân đối phương không
-    if (targetPiece && movingPiece[3] === targetPiece[3]) {
+    // Kiểm tra nếu quân cờ đích là quân đối phương
+    if (
+      targetPiece &&
+      movingPiece.split("_")[1] === targetPiece.split("_")[1]
+    ) {
+      console.log("Cannot capture same color piece!");
       return;
     }
-
     const newGameState = { ...gameState };
-    if (targetPiece) {
-      console.log(`Captured: ${targetPiece}`); // Debug để xem có ăn được quân không
-      delete newGameState[toKey]; // Xóa quân cờ bị ăn
-    }
-    newGameState[toKey] = movingPiece; // Đặt quân cờ vào vị trí mới
-    delete newGameState[fromKey]; // Xóa vị trí c
+    delete newGameState[fromKey]; // Xóa quân cờ khỏi vị trí cũ
+    newGameState[toKey] = movingPiece; // Đặt quân vào vị trí mới
 
     this.setState({ gameState: newGameState, selectedPiece: null });
-  };
-
-  getValidMoves = (position) => {
-    const { gameState } = this.state;
-    const { row, col } = position;
-    const key = `${col}${row}`;
-    const piece = gameState[key];
-
-    if (!piece) return []; // Nếu không có quân cờ, không có nước đi
-
-    const moves = [];
-    const direction = piece.includes("_r") ? 1 : -1;
-
-    // Ví dụ: nếu là tốt (tot_r hoặc tot_b)
-    const newRow = row + direction;
-    const newKey = `${col}${newRow}`;
-    if (!gameState[newKey]) {
-      moves.push({ row: newRow, col });
-    }
-
-    // ✅ Kiểm tra hai ô chéo để ăn quân đối phương
-    [col - 1, col + 1].forEach((newCol) => {
-      const attackKey = `${newCol}${newRow}`;
-      if (
-        gameState[attackKey] &&
-        gameState[attackKey].split("_")[1] !== piece.split("_")[1]
-      ) {
-        moves.push({ row: newRow, col: newCol });
-      }
-    });
-
-    return moves; // Trả về danh sách nước đi hợp lệ
   };
 
   render() {
@@ -122,10 +86,7 @@ class GameController extends React.Component {
       <div className="flex flex-col items-center mt-10">
         <Board
           gameState={this.state.gameState}
-          setGameState={(newGameState) =>
-            this.setState({ gameState: newGameState })
-          }
-          getValidMoves={this.getValidMoves} // ✅ Truyền hàm xuống Board.jsx
+          onSquareClick={this.handleSquareClick}
         />
       </div>
     );
