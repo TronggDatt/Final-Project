@@ -44,28 +44,39 @@ class GameController extends React.Component {
       gameState: { ...INITIAL_GAME_STATE },
       selectedPiece: null,
       validMoves: [],
+      currentPlayer: "r", // Người chơi bắt đầu là đỏ
     };
   }
 
   handleSquareClick = (row, col) => {
-    const { selectedPiece, gameState } = this.state;
+    const { selectedPiece, gameState, currentPlayer } = this.state;
     const key = `${col}${row}`;
+    const clickedPiece = gameState[key];
 
     if (selectedPiece) {
-      this.movePiece(selectedPiece, { row, col });
-    } else if (gameState[key]) {
-      // Lấy danh sách nước đi hợp lệ từ chessLogic.jsx
-      const board = convertGameStateToBoard(gameState);
-      const piece = gameState[key];
-      const validMoves = getValidMoves(board, { row, col }, piece);
+      // Nếu chọn quân khác của mình, đổi sang quân đó
+      if (clickedPiece && clickedPiece.endsWith(`_${currentPlayer}`)) {
+        const board = convertGameStateToBoard(gameState);
+        const validMoves = getValidMoves(board, { row, col }, clickedPiece);
+        this.setState({ selectedPiece: { row, col }, validMoves });
+        return;
+      }
 
+      // Nếu nhấp vào ô trống hoặc quân đối thủ, thử di chuyển
+      if (this.movePiece(selectedPiece, { row, col })) {
+        // Chuyển lượt chơi
+        this.setState({ currentPlayer: currentPlayer === "r" ? "b" : "r" });
+      }
+    } else if (clickedPiece && clickedPiece.endsWith(`_${currentPlayer}`)) {
+      // Chỉ chọn quân của người chơi hiện tại
+      const board = convertGameStateToBoard(gameState);
+      const validMoves = getValidMoves(board, { row, col }, clickedPiece);
       this.setState({ selectedPiece: { row, col }, validMoves });
     }
   };
 
   movePiece = (from, to) => {
     const { gameState, validMoves } = this.state;
-    console.log("Valid Moves:", validMoves);
     const fromKey = `${from.col}${from.row}`;
     const toKey = `${to.col}${to.row}`;
 
@@ -95,11 +106,15 @@ class GameController extends React.Component {
       selectedPiece: null,
       validMoves: [],
     });
+    return true;
   };
 
   render() {
     return (
       <div className="flex flex-col items-center mt-10">
+        <p className="text-lg font-bold mb-2">
+          Lượt chơi: {this.state.currentPlayer === "r" ? "Đỏ" : "Đen"}
+        </p>
         <Board
           gameState={this.state.gameState}
           onSquareClick={this.handleSquareClick}
