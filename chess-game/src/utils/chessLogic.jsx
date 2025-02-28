@@ -74,19 +74,22 @@ const isValidPawnMove = (piece, from, to) => {
   const forwardDirection = isRed ? 1 : -1; // Đỏ tiến xuống, Đen tiến lên
   const riverBoundary = isRed ? 4 : 5; // Hàng sông
 
-  const isOneStepForward =
-    to.row === from.row + forwardDirection && to.col === from.col;
-  const isOneStepSide =
-    Math.abs(to.col - from.col) === 1 && to.row === from.row;
-
-  if (
-    (isRed && from.row <= riverBoundary) ||
-    (!isRed && from.row >= riverBoundary)
-  ) {
-    return isOneStepForward; // Chưa qua sông chỉ đi thẳng
+  // Tốt đi thẳng một bước
+  if (to.row === from.row + forwardDirection && to.col === from.col) {
+    return true;
   }
 
-  return isOneStepForward || isOneStepSide; // Qua sông có thể đi ngang
+  // Sau khi qua sông, Tốt có thể đi ngang một bước nhưng không được đi lùi
+  if (
+    (isRed && from.row > riverBoundary) ||
+    (!isRed && from.row < riverBoundary)
+  ) {
+    if (Math.abs(to.col - from.col) === 1 && to.row === from.row) {
+      return true;
+    }
+  }
+
+  return false;
 };
 
 // Kiểm tra nước đi hợp lệ của Pháo
@@ -114,6 +117,84 @@ const isValidCannonMove = (board, from, to) => {
   return board[to.row][to.col] ? count === 1 : count === 0;
 };
 
+// Kiểm tra nước đi hợp lệ của Tượng
+const isValidElephantMove = (board, from, to, piece) => {
+  const color = piece.slice(-1);
+  const isRed = color === "r";
+  const riverBoundary = isRed ? 4 : 5;
+
+  // Kiểm tra đi chéo đúng 2 ô
+  if (Math.abs(from.row - to.row) !== 2 || Math.abs(from.col - to.col) !== 2) {
+    return false;
+  }
+
+  // Kiểm tra không qua sông
+  if ((isRed && to.row > riverBoundary) || (!isRed && to.row < riverBoundary)) {
+    return false;
+  }
+
+  // Kiểm tra có bị cản giữa đường không
+  const midRow = (from.row + to.row) / 2;
+  const midCol = (from.col + to.col) / 2;
+  if (board[midRow][midCol]) {
+    return false;
+  }
+
+  return true;
+};
+
+// Kiểm tra nước đi hợp lệ của Sĩ
+const isValidAdvisorMove = (from, to, piece) => {
+  const color = piece.slice(-1);
+  const isRed = color === "r";
+  const palaceRows = isRed ? [0, 1, 2] : [7, 8, 9];
+  const palaceCols = [3, 4, 5];
+
+  return (
+    Math.abs(from.row - to.row) === 1 &&
+    Math.abs(from.col - to.col) === 1 &&
+    palaceRows.includes(to.row) &&
+    palaceCols.includes(to.col)
+  );
+};
+
+// Kiểm tra nước đi hợp lệ của Tướng
+const isValidKingMove = (board, from, to, piece) => {
+  const color = piece.slice(-1);
+  const palaceBounds =
+    color === "r" ? { rowMin: 0, rowMax: 2 } : { rowMin: 7, rowMax: 9 };
+  if (
+    to.row < palaceBounds.rowMin ||
+    to.row > palaceBounds.rowMax ||
+    to.col < 3 ||
+    to.col > 5
+  ) {
+    return false;
+  }
+  if (Math.abs(from.row - to.row) + Math.abs(from.col - to.col) !== 1) {
+    return false;
+  }
+
+  // Kiểm tra luật đối mặt
+  return !isKingFacing(board, from, to, color);
+};
+
+// Kiểm tra nếu hai Tướng đối mặt nhau
+const isKingFacing = (board, from, to, color) => {
+  const enemyColor = color === "r" ? "b" : "r";
+  const enemyKingPos = findKing(board, enemyColor);
+  if (enemyKingPos.col !== to.col) return false;
+
+  for (
+    let row = Math.min(enemyKingPos.row, to.row) + 1;
+    row < Math.max(enemyKingPos.row, to.row);
+    row++
+  ) {
+    if (board[row][to.col]) return false;
+  }
+  return true;
+};
+
 // Kiểm tra nước đi hợp lệ chung
 export const isValidMove = (board, from, to, piece) => {
   if (!piece || (from.row === to.row && from.col === to.col)) return false;
@@ -132,6 +213,12 @@ export const isValidMove = (board, from, to, piece) => {
       return isValidCannonMove(board, from, to);
     case "tot":
       return isValidPawnMove(piece, from, to);
+    case "tinh":
+      return isValidElephantMove(board, from, to, piece);
+    case "sy":
+      return isValidAdvisorMove(from, to, piece);
+    case "tuong":
+      return isValidKingMove(board, from, to, piece);
     default:
       return false;
   }

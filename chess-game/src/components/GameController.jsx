@@ -69,20 +69,12 @@ class GameController extends React.Component {
     const fromKey = `${from.col}${from.row}`;
     const toKey = `${to.col}${to.row}`;
 
-    // if (
-    //   !Array.isArray(validMoves) ||
-    //   !validMoves.some(([r, c]) => r === to.row && c === to.col)
-    // ) {
-    //   console.log("Invalid move!");
-    //   return;
-    // }
-
-    // if (!validMoves.some(([r, c]) => r === to.row && c === to.col)) {
-    //   console.log("Invalid move!", to);
-    //   return;
-    // }
-
-    if (!gameState[fromKey]) return;
+    if (
+      !validMoves.some((move) => move.row === to.row && move.col === to.col)
+    ) {
+      console.log("Nước đi không hợp lệ!");
+      return;
+    }
 
     const movingPiece = gameState[fromKey];
     const targetPiece = gameState[toKey];
