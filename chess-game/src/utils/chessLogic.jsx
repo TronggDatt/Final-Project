@@ -60,11 +60,36 @@ const isValidRookMove = (board, from, to) => {
   return true;
 };
 
-// Kiểm tra nước đi hợp lệ của Mã
-const isValidKnightMove = (from, to) => {
-  const dx = Math.abs(from.col - to.col);
-  const dy = Math.abs(from.row - to.row);
-  return (dx === 2 && dy === 1) || (dx === 1 && dy === 2);
+// Kiểm tra nước đi hợp lệ của Mã (bao gồm luật cản Mã)
+const isValidKnightMove = (board, from, to) => {
+  if (!from || !to) {
+    console.error("from hoặc to bị undefined:", { from, to });
+    return false;
+  }
+  const dx = to.col - from.col;
+  const dy = to.row - from.row;
+
+  if (
+    !(
+      (Math.abs(dx) === 2 && Math.abs(dy) === 1) ||
+      (Math.abs(dx) === 1 && Math.abs(dy) === 2)
+    )
+  ) {
+    return false;
+  }
+
+  // Kiểm tra cản Mã
+  const blockRow = from.row + dy / 2;
+  const blockCol = from.col + dx / 2;
+
+  if (
+    (Math.abs(dx) === 2 && board[from.row][blockCol]) ||
+    (Math.abs(dy) === 2 && board[blockRow][from.col])
+  ) {
+    return false;
+  }
+
+  return true;
 };
 
 // Kiểm tra nước đi hợp lệ của Tốt
@@ -208,7 +233,7 @@ export const isValidMove = (board, from, to, piece) => {
     case "xe":
       return isValidRookMove(board, from, to);
     case "ma":
-      return isValidKnightMove(from, to);
+      return isValidKnightMove(board, from, to);
     case "phao":
       return isValidCannonMove(board, from, to);
     case "tot":
