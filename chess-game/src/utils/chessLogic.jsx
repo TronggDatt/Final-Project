@@ -259,6 +259,17 @@ const findKing = (board, color) => {
   return null;
 };
 
+// Kiểm tra xem nước đi có tạo ra tình huống chiếu tướng không
+export function willMoveCheckKing(board, from, to, nextPlayer) {
+  // Tạo bản sao game state và thực hiện di chuyển quân
+  const tempBoard = [...board]; // Make sure you're correctly copying the board
+  tempBoard[to.row][to.col] = tempBoard[from.row][from.col];
+  tempBoard[from.row][from.col] = null;
+
+  // Kiểm tra xem tướng của nextPlayer có bị chiếu không
+  return isKingInCheck(tempBoard, nextPlayer); // Check if the king is in check after the move
+}
+
 // Kiểm tra chiếu tướng
 export const isCheck = (board, color) => {
   const kingPos = findKing(board, color);

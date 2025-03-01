@@ -5,6 +5,7 @@ import {
   getValidMoves,
   isCheckmate,
   isKingInCheck,
+  willMoveCheckKing,
 } from "../utils/chessLogic";
 import Swal from "sweetalert2";
 
@@ -78,6 +79,15 @@ class GameController extends React.Component {
         const check = isKingInCheck(board, nextPlayer);
         const checkmate = isCheckmate(board, nextPlayer);
 
+        // Kiểm tra xem quân di chuyển có tạo ra tình huống chiếu tướng hay không
+        if (willMoveCheckKing(board, selectedPiece, { row, col }, nextPlayer)) {
+          Swal.fire({
+            icon: "warning",
+            title: "Cảnh báo!",
+            text: "Tướng của bạn đang bị chiếu tướng! Hãy bảo vệ tướng của mình!",
+          });
+        }
+
         if (check) {
           Swal.fire({
             icon: "warning",
@@ -150,6 +160,17 @@ class GameController extends React.Component {
       validMoves: [],
     });
     return true;
+  };
+
+  // Kiểm tra xem quân di chuyển có tạo ra chiếu tướng hay không
+  willMoveCheckKing = (board, from, to, nextPlayer) => {
+    // Tạo bản sao game state và thực hiện di chuyển quân
+    const tempBoard = [...board];
+    tempBoard[to.row][to.col] = tempBoard[from.row][from.col];
+    tempBoard[from.row][from.col] = null;
+
+    // Kiểm tra xem tướng của nextPlayer có bị chiếu không
+    return isKingInCheck(tempBoard, nextPlayer);
   };
 
   render() {
