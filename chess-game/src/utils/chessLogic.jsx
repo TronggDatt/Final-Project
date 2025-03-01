@@ -264,12 +264,96 @@ export const isCheck = (board, color) => {
   const kingPos = findKing(board, color);
   if (!kingPos) return false;
 
-  return board.some((row, rowIndex) =>
-    row.some(
-      (piece, colIndex) =>
-        piece &&
-        piece.slice(-1) !== color &&
-        isValidMove(board, { row: rowIndex, col: colIndex }, kingPos, piece)
-    )
+  return board.some((row, rIdx) =>
+    row.some((piece, cIdx) => {
+      if (piece && piece.slice(-1) !== color) {
+        const validMoves = getValidMoves(
+          board,
+          { row: rIdx, col: cIdx },
+          piece
+        );
+        return validMoves.some(
+          (move) => move.row === kingPos.row && move.col === kingPos.col
+        );
+      }
+      return false;
+    })
   );
 };
+
+// Kiểm tra chiếu hết
+export const isCheckmate = (board, color) => {
+  if (!isCheck(board, color)) return false;
+
+  for (let row = 0; row < 10; row++) {
+    for (let col = 0; col < 9; col++) {
+      const piece = board[row][col];
+      if (piece && piece.slice(-1) === color) {
+        const validMoves = getValidMoves(board, { row, col }, piece);
+        for (const move of validMoves) {
+          const newBoard = board.map((r) => [...r]);
+          newBoard[move.row][move.col] = piece;
+          newBoard[row][col] = null;
+
+          if (!isCheck(newBoard, color)) {
+            return false;
+          }
+        }
+      }
+    }
+  }
+  return true;
+};
+
+export const isGeneralFacing = (board) => {
+  let redKing = null,
+    blackKing = null;
+
+  for (let row = 0; row < 10; row++) {
+    for (let col = 0; col < 9; col++) {
+      if (board[row][col] === "Kr") redKing = { row, col };
+      if (board[row][col] === "Kb") blackKing = { row, col };
+    }
+  }
+  if (!redKing || !blackKing || redKing.col !== blackKing.col) return false;
+
+  for (let i = redKing.row + 1; i < blackKing.row; i++) {
+    if (board[i][redKing.col]) return false;
+  }
+  return true;
+};
+export function isKingInCheck(board, currentPlayer) {
+  // Xác định vị trí của tướng
+  let kingPosition = null;
+  for (let row = 0; row < board.length; row++) {
+    for (let col = 0; col < board[row].length; col++) {
+      if (board[row][col] === `tuong_${currentPlayer}`) {
+        kingPosition = { row, col };
+        break;
+      }
+    }
+  }
+
+  if (!kingPosition) return false; // Không tìm thấy tướng, có thể là lỗi dữ liệu
+
+  // Kiểm tra xem quân đối phương có thể di chuyển đến vị trí tướng không
+  const opponent = currentPlayer === "r" ? "b" : "r";
+  for (let row = 0; row < board.length; row++) {
+    for (let col = 0; col < board[row].length; col++) {
+      const piece = board[row][col];
+      if (piece && piece.endsWith(`_${opponent}`)) {
+        const validMoves = getValidMoves(board, { row, col }, piece);
+        if (
+          validMoves.some(
+            (move) =>
+              move.row === kingPosition.row && move.col === kingPosition.col
+          )
+        ) {
+          return true; // Tướng đang bị chiếu
+        }
+      }
+    }
+  }
+
+  return false; // Tướng không bị chiếu
+}

@@ -1,6 +1,12 @@
 import React from "react";
 import Board from "./Board";
-import { convertGameStateToBoard, getValidMoves } from "../utils/chessLogic";
+import {
+  convertGameStateToBoard,
+  getValidMoves,
+  isCheckmate,
+  isKingInCheck,
+} from "../utils/chessLogic";
+import Swal from "sweetalert2";
 
 const INITIAL_GAME_STATE = {
   "00": "xe_r",
@@ -45,6 +51,8 @@ class GameController extends React.Component {
       selectedPiece: null,
       validMoves: [],
       currentPlayer: "r", // Người chơi bắt đầu là đỏ
+      isCheck: false,
+      isCheckmate: false,
     };
   }
 
@@ -64,8 +72,38 @@ class GameController extends React.Component {
 
       // Nếu nhấp vào ô trống hoặc quân đối thủ, thử di chuyển
       if (this.movePiece(selectedPiece, { row, col })) {
-        // Chuyển lượt chơi
-        this.setState({ currentPlayer: currentPlayer === "r" ? "b" : "r" });
+        const newGameState = { ...this.state.gameState };
+        const board = convertGameStateToBoard(newGameState);
+        const nextPlayer = currentPlayer === "r" ? "b" : "r";
+        const check = isKingInCheck(board, nextPlayer);
+        const checkmate = isCheckmate(board, nextPlayer);
+
+        if (check) {
+          Swal.fire({
+            icon: "warning",
+            title: "Cảnh báo!",
+            text: `Tướng của ${
+              nextPlayer === "r" ? "Đỏ" : "Đen"
+            } đang bị chiếu!`,
+          });
+        }
+
+        if (checkmate) {
+          Swal.fire({
+            icon: "success",
+            title: "Chiếu bí!",
+            text: `${nextPlayer === "r" ? "Đen" : "Đỏ"} đã thắng ván cờ!`,
+          }).then(() => {
+            // Nếu chiếu bí, không cho phép tiếp tục chơi
+            this.setState({ isCheckmate: true });
+          });
+        }
+
+        this.setState({
+          currentPlayer: nextPlayer,
+          isCheck: check,
+          isCheckmate: checkmate,
+        });
       }
     } else if (clickedPiece && clickedPiece.endsWith(`_${currentPlayer}`)) {
       // Chỉ chọn quân của người chơi hiện tại
@@ -76,30 +114,35 @@ class GameController extends React.Component {
   };
 
   movePiece = (from, to) => {
-    const { gameState, validMoves } = this.state;
+    const { gameState, validMoves, currentPlayer } = this.state;
     const fromKey = `${from.col}${from.row}`;
     const toKey = `${to.col}${to.row}`;
 
     if (
       !validMoves.some((move) => move.row === to.row && move.col === to.col)
     ) {
-      console.log("Nước đi không hợp lệ!");
-      return;
+      Swal.fire({
+        icon: "error",
+        title: "Nước đi không hợp lệ!",
+        text: "Bạn không thể di chuyển quân đến vị trí này!",
+      });
+      return false;
     }
 
     const movingPiece = gameState[fromKey];
-    const targetPiece = gameState[toKey];
-
-    // Kiểm tra nếu quân cờ đích là quân đối phương
-    if (
-      targetPiece &&
-      movingPiece.split("_")[1] === targetPiece.split("_")[1]
-    ) {
-      return;
-    }
     const newGameState = { ...gameState };
-    delete newGameState[fromKey]; // Xóa quân cờ khỏi vị trí cũ
-    newGameState[toKey] = movingPiece; // Đặt quân vào vị trí mới
+    delete newGameState[fromKey];
+    newGameState[toKey] = movingPiece;
+
+    // Kiểm tra xem nước đi có làm tướng bị chiếu không
+    if (isKingInCheck(convertGameStateToBoard(newGameState), currentPlayer)) {
+      Swal.fire({
+        icon: "error",
+        title: "Nước đi không hợp lệ!",
+        text: "Nước đi này khiến tướng của bạn bị chiếu!",
+      });
+      return false;
+    }
 
     this.setState({
       gameState: newGameState,
@@ -115,6 +158,16 @@ class GameController extends React.Component {
         <p className="text-lg font-bold mb-2">
           Lượt chơi: {this.state.currentPlayer === "r" ? "Đỏ" : "Đen"}
         </p>
+        {this.state.isCheck && (
+          <p className="text-red-500 font-bold">
+            Cảnh báo: Tướng đang bị chiếu!
+          </p>
+        )}
+        {this.state.isCheckmate && (
+          <p className="text-red-600 font-bold">
+            Chiếu bí! {this.state.currentPlayer === "r" ? "Đen" : "Đỏ"} thắng!
+          </p>
+        )}
         <Board
           gameState={this.state.gameState}
           onSquareClick={this.handleSquareClick}
