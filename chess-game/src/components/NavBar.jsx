@@ -19,12 +19,12 @@ const NavBar = () => {
           </li>
           <li>
             <Link to="/login" className="hover:text-gray-400">
-              Đăng nhập
+              Log In
             </Link>
           </li>
           <li>
             <Link to="/register" className="hover:text-gray-400">
-              Đăng ký
+              Register
             </Link>
           </li>
         </ul>
