@@ -1,12 +1,24 @@
 import "./App.css";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import React from "react";
 import GameController from "./components/GameController";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Layout from "./components/Layout";
 
 function App() {
   return (
-    <div className="App">
-      <GameController />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
+          <Route path="game" element={<GameController />} />
+        </Route>
+      </Routes>
+    </Router>
   );
 }
 
