@@ -1,5 +1,6 @@
 import React from "react";
 import Board from "./Board";
+import ChatBox from "./ChatBox";
 import {
   convertGameStateToBoard,
   getValidMoves,
@@ -8,6 +9,41 @@ import {
   willMoveCheckKing,
 } from "../utils/chessLogic";
 import Swal from "sweetalert2";
+import axios from "axios";
+
+const API_URL = "http://localhost:8080/games";
+// Lấy danh sách tất cả các ván cờ
+export const getAllGames = async () => {
+  try {
+    const response = await axios.get(API_URL);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching games:", error);
+    return [];
+  }
+};
+
+// Lấy game theo ID
+export const getGameById = async (id) => {
+  try {
+    const response = await axios.get(`${API_URL}/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching game with ID ${id}:`, error);
+    return null;
+  }
+};
+
+// Tạo ván cờ mới
+export const createGame = async (game) => {
+  try {
+    const response = await axios.post(API_URL, game);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating game:", error);
+    return null;
+  }
+};
 
 const INITIAL_GAME_STATE = {
   "00": "xe_r",
@@ -54,6 +90,7 @@ class GameController extends React.Component {
       currentPlayer: "r", // Người chơi bắt đầu là đỏ
       isCheck: false,
       isCheckmate: false,
+      moveHistory: [],
     };
   }
 
@@ -67,6 +104,14 @@ class GameController extends React.Component {
       if (clickedPiece && clickedPiece.endsWith(`_${currentPlayer}`)) {
         const board = convertGameStateToBoard(gameState);
         const validMoves = getValidMoves(board, { row, col }, clickedPiece);
+        if (validMoves.length === 0) {
+          Swal.fire({
+            icon: "info",
+            title: "Không có nước đi hợp lệ!",
+            text: "Hãy chọn quân khác.",
+          });
+          return;
+        }
         this.setState({ selectedPiece: { row, col }, validMoves });
         return;
       }
@@ -154,11 +199,20 @@ class GameController extends React.Component {
       return false;
     }
 
-    this.setState({
+    const newMove = {
+      redMove:
+        currentPlayer === "r" ? `${movingPiece} (${fromKey} -> ${toKey})` : "",
+      blackMove:
+        currentPlayer === "b" ? `${movingPiece} (${fromKey} -> ${toKey})` : "",
+    };
+
+    this.setState((prevState) => ({
       gameState: newGameState,
       selectedPiece: null,
       validMoves: [],
-    });
+      moveHistory: [...prevState.moveHistory, newMove],
+      currentPlayer: currentPlayer === "r" ? "b" : "r",
+    }));
     return true;
   };
 
@@ -175,25 +229,33 @@ class GameController extends React.Component {
 
   render() {
     return (
-      <div className="flex flex-col items-center mt-10">
-        <p className="text-lg font-bold mb-2">
-          Lượt chơi: {this.state.currentPlayer === "r" ? "Đỏ" : "Đen"}
-        </p>
-        {this.state.isCheck && (
-          <p className="text-red-500 font-bold">
-            Cảnh báo: Tướng đang bị chiếu!
+      <div className="flex justify-center mt-10">
+        {/* Bàn cờ nằm bên trái */}
+        <div className="flex flex-col items-center">
+          <p className="text-lg font-bold mb-2">
+            Lượt chơi: {this.state.currentPlayer === "r" ? "Đỏ" : "Đen"}
           </p>
-        )}
-        {this.state.isCheckmate && (
-          <p className="text-red-600 font-bold">
-            Chiếu bí! {this.state.currentPlayer === "r" ? "Đen" : "Đỏ"} thắng!
-          </p>
-        )}
-        <Board
-          gameState={this.state.gameState}
-          onSquareClick={this.handleSquareClick}
-          validMoves={this.state.validMoves}
-        />
+          {this.state.isCheck && (
+            <p className="text-red-500 font-bold">
+              Cảnh báo: Tướng đang bị chiếu!
+            </p>
+          )}
+          {this.state.isCheckmate && (
+            <p className="text-red-600 font-bold">
+              Chiếu bí! {this.state.currentPlayer === "r" ? "Đen" : "Đỏ"} thắng!
+            </p>
+          )}
+          <Board
+            gameState={this.state.gameState}
+            onSquareClick={this.handleSquareClick}
+            validMoves={this.state.validMoves}
+          />
+        </div>
+
+        {/* ChatBox bên phải */}
+        <div className="w-96 h-80 ml-6">
+          <ChatBox moves={this.state.moveHistory} />
+        </div>
       </div>
     );
   }
