@@ -30,7 +30,7 @@ const Login = () => {
             <input
               type="email"
               className="w-full p-2 border border-gray-300 rounded mt-1"
-              placeholder="Nhập email của bạn"
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

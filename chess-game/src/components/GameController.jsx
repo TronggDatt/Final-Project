@@ -233,7 +233,7 @@ class GameController extends React.Component {
         {/* Bàn cờ nằm bên trái */}
         <div className="flex flex-col items-center">
           <p className="text-lg font-bold mb-2">
-            Lượt chơi: {this.state.currentPlayer === "r" ? "Đỏ" : "Đen"}
+            Player: {this.state.currentPlayer === "r" ? "Red" : "Black"}
           </p>
           {this.state.isCheck && (
             <p className="text-red-500 font-bold">
@@ -242,7 +242,8 @@ class GameController extends React.Component {
           )}
           {this.state.isCheckmate && (
             <p className="text-red-600 font-bold">
-              Chiếu bí! {this.state.currentPlayer === "r" ? "Đen" : "Đỏ"} thắng!
+              Checkmate! {this.state.currentPlayer === "r" ? "Red" : "Black"}{" "}
+              win!
             </p>
           )}
           <Board

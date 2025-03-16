@@ -34,7 +34,7 @@ const ChatBox = ({ messages = [], onSendMessage, moves = [] }) => {
           }`}
           onClick={() => setActiveTab("moves")}
         >
-          ♟️ Nước đi
+          ♟️ Moves
         </button>
       </div>
 
@@ -49,16 +49,16 @@ const ChatBox = ({ messages = [], onSendMessage, moves = [] }) => {
                   msg.player === "r" ? "text-red-500" : "text-black"
                 }`}
               >
-                <b>{msg.player === "r" ? "Đỏ" : "Đen"}:</b> {msg.text}
+                <b>{msg.player === "r" ? "Red" : "Black"}:</b> {msg.text}
               </div>
             ))
           ) : (
-            <p className="text-gray-500">Chưa có tin nhắn nào</p>
+            <p className="text-gray-500">No messages yet</p>
           )
         ) : moves.length > 0 ? (
           <MoveHistory moveHistory={moves} />
         ) : (
-          <p className="text-gray-500">Chưa có nước đi nào</p>
+          <p className="text-gray-500">No move yet</p>
         )}
       </div>
 
@@ -75,7 +75,7 @@ const ChatBox = ({ messages = [], onSendMessage, moves = [] }) => {
             onClick={handleSend}
             className="ml-2 bg-blue-500 text-white px-2 py-1 rounded"
           >
-            Gửi
+            Send
           </button>
         </div>
       )}
