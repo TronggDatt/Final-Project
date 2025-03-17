@@ -11,6 +11,11 @@ import {
 import Swal from "sweetalert2";
 import axios from "axios";
 
+import moveSound from "../Sound/move.mp3";
+import captureSound from "../Sound/capture.mp3";
+
+
+
 const API_URL = "http://localhost:8080/games";
 // Lấy danh sách tất cả các ván cờ
 export const getAllGames = async () => {
@@ -87,11 +92,15 @@ class GameController extends React.Component {
       gameState: { ...INITIAL_GAME_STATE },
       selectedPiece: null,
       validMoves: [],
-      currentPlayer: "r", // Người chơi bắt đầu là đỏ
+      currentPlayer: "r",
       isCheck: false,
       isCheckmate: false,
       moveHistory: [],
     };
+
+    // Load âm thanh từ thư mục public
+    this.moveAudio = new Audio(moveSound);
+    this.captureAudio = new Audio(captureSound);
   }
 
   handleSquareClick = (row, col) => {
@@ -187,8 +196,10 @@ class GameController extends React.Component {
     const movingPiece = gameState[fromKey];
     const newGameState = { ...gameState };
     delete newGameState[fromKey];
+    const capturedPiece = newGameState[toKey]; // Kiểm tra có ăn quân không
     newGameState[toKey] = movingPiece;
 
+    
     // Kiểm tra xem nước đi có làm tướng bị chiếu không
     if (isKingInCheck(convertGameStateToBoard(newGameState), currentPlayer)) {
       Swal.fire({
@@ -199,6 +210,13 @@ class GameController extends React.Component {
       return false;
     }
 
+     // **Phát âm thanh dựa trên loại nước đi**
+     if (capturedPiece) {
+      this.captureAudio.play(); // Nếu ăn quân thì phát âm thanh capture
+  } else {
+      this.moveAudio.play(); // Nếu chỉ di chuyển thì phát âm thanh move
+  }
+
     const newMove = {
       redMove:
         currentPlayer === "r" ? `${movingPiece} (${fromKey} -> ${toKey})` : "",
@@ -206,6 +224,7 @@ class GameController extends React.Component {
         currentPlayer === "b" ? `${movingPiece} (${fromKey} -> ${toKey})` : "",
     };
 
+    
     this.setState((prevState) => ({
       gameState: newGameState,
       selectedPiece: null,
