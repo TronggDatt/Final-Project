@@ -16,7 +16,7 @@ const Layout = () => {
       {/* Footer */}
       <footer className="bg-gray-900 text-white text-center p-3 mt-auto">
         &copy; {new Date().getFullYear()} Xiangqi Game. This game is developed
-        by TronggDatt.
+        by BTEC FPT students.
       </footer>
     </div>
   );
