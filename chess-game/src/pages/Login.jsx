@@ -1,20 +1,40 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("LogIn with:", { email, password });
 
-    // Giả lập đăng nhập thành công -> Chuyển hướng
-    if (email === "test@example.com" && password === "123456") {
-      navigate("/game"); // Chuyển hướng đến trang game sau khi đăng nhập
-    } else {
-      alert("Incorrect email or password!");
+    try {
+      const response = await fetch("http://localhost:8080/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
+
+        alert("Login successful!");
+        if (data.role === "ADMIN") {
+          navigate("/admin");
+        } else {
+          navigate("/home");
+        }
+      } else {
+        const errorMsg = await response.text();
+        alert(errorMsg);
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      alert("Login failed. Please try again.");
     }
   };
 
