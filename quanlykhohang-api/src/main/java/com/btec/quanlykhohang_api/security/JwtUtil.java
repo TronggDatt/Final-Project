@@ -1,17 +1,14 @@
 package com.btec.quanlykhohang_api.security;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.SignatureException;
-
-import java.util.Date;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
+@Component
 public class JwtUtil {
 
-    private static final String SECRET_KEY = "Akjhsdfjkhsdfhsadhjaskdhasjkhdkjsahdjkashdjkashdjksahdjksadhsakjh"; // Use a secure key
+    private static final String SECRET_KEY = "Akjhsdfjkhsdfhsadhjaskdhasjkhdkjsahdjkashdjkashdjksahdjksadhsakjh";
     private static final long EXPIRATION_TIME = 86400000; // 1 day in milliseconds
 
     /**
@@ -20,7 +17,7 @@ public class JwtUtil {
      * @param email The user's email.
      * @return The JWT token.
      */
-    public static String generateToken(String email) {
+    public String generateToken(String email) {
         return Jwts.builder()
                 .setSubject(email)
                 .setIssuedAt(new Date())
@@ -29,7 +26,14 @@ public class JwtUtil {
                 .compact();
     }
 
-    public static boolean verifyToken(String token) throws Exception {
+    /**
+     * Verify the JWT token validity.
+     *
+     * @param token JWT token.
+     * @return true if valid, false if invalid/expired.
+     * @throws Exception If invalid token.
+     */
+    public boolean verifyToken(String token) throws Exception {
         try {
             Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token);
             return true;
@@ -42,7 +46,14 @@ public class JwtUtil {
         }
     }
 
-
-
-    // Existing methods for validation and claims extraction
+    /**
+     * Extract email (subject) from token.
+     */
+    public String getEmailFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(SECRET_KEY)
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getSubject();
+    }
 }

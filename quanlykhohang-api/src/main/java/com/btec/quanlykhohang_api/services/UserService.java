@@ -3,12 +3,11 @@ package com.btec.quanlykhohang_api.services;
 import com.btec.quanlykhohang_api.entities.User;
 import com.btec.quanlykhohang_api.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -16,40 +15,44 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
-    public User createUser(User user) {
-        // Hash the password before saving
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
-    }
-    public User getUserByEmail(String email) {
-        return userRepository.findByEmail(email).orElse(null);
-    }
-
+    // Get all users
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
+    // Get user by ID
     public Optional<User> getUserById(String id) {
         return userRepository.findById(id);
     }
 
-    public User updateUser(String id, User updatedUser) {
-        Optional<User> userOptional = userRepository.findById(id);
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            user.setFirstName(updatedUser.getFirstName());
-            user.setLastName(updatedUser.getLastName());
-            user.setBirthDay(updatedUser.getBirthDay());
-            user.setActive(updatedUser.isActive());
-            user.setAddress(updatedUser.getAddress());
-            return userRepository.save(user);
-        }
-        return null;
+    // Create user
+    public User createUser(User user) {
+        user.setId(UUID.randomUUID().toString());
+        return userRepository.save(user);
     }
 
-    public void deleteUser(String id) {
-        userRepository.deleteById(id);
+    // Update user
+    public Optional<User> updateUser(String id, User userData) {
+        Optional<User> existingUser = userRepository.findById(id);
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            user.setUsername(userData.getUsername());
+            user.setEmail(userData.getEmail());
+            user.setPassword(userData.getPassword());
+            user.setRole(userData.getRole());
+            return Optional.of(userRepository.save(user));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    // Delete user
+    public boolean deleteUser(String id) {
+        Optional<User> user = userRepository.findById(id);
+        if (user.isPresent()) {
+            userRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 }
