@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+// import axios from "axios";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -19,14 +19,18 @@ const Login = () => {
 
       if (response.ok) {
         const data = await response.json();
+
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.role);
 
         alert("Login successful!");
         if (data.role === "ADMIN") {
           navigate("/admin");
-        } else {
+        } else if (data.role === "USER") {
           navigate("/home");
+        } else {
+          // Trường hợp role lạ
+          alert("Unknown role, please contact admin.");
         }
       } else {
         const errorMsg = await response.text();

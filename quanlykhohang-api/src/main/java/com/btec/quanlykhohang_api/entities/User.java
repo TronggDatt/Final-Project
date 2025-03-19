@@ -9,8 +9,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class User {
     @Id
     private String id;
-    private String username;
+    private String fullname;
     private String email;
     private String password;
     private String role; // ADMIN or USER
+    private boolean active;
 }

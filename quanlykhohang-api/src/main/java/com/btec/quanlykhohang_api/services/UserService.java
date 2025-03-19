@@ -36,7 +36,7 @@ public class UserService {
         Optional<User> existingUser = userRepository.findById(id);
         if (existingUser.isPresent()) {
             User user = existingUser.get();
-            user.setUsername(userData.getUsername());
+            user.setFullname(userData.getFullname());
             user.setEmail(userData.getEmail());
             user.setPassword(userData.getPassword());
             user.setRole(userData.getRole());
