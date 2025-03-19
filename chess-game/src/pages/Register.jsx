@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const Register = () => {
-  const [name, setName] = useState("");
+  const [fullName, setfullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Kiểm tra mật khẩu nhập lại
@@ -17,11 +17,29 @@ const Register = () => {
       return;
     }
 
-    console.log("Register with:", { name, email, password });
+    try {
+      const response = await fetch("http://localhost:8080/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: fullName,
+          email: email,
+          password: password,
+          confirmPassword: confirmPassword,
+        }),
+      });
 
-    // Giả lập đăng ký thành công -> Chuyển hướng đến trang đăng nhập
-    alert("Registration successful! Please loginp.");
-    navigate("/login");
+      if (response.ok) {
+        alert("Registration successful! Please log in.");
+        navigate("/login");
+      } else {
+        const errorMsg = await response.text();
+        alert(errorMsg);
+      }
+    } catch (error) {
+      console.error("Registration failed:", error);
+      alert("Registration failed. Please try again.");
+    }
   };
 
   return (
@@ -37,8 +55,8 @@ const Register = () => {
               type="text"
               className="w-full p-2 border border-gray-300 rounded mt-1"
               placeholder="Enter your full name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={fullName}
+              onChange={(e) => setfullName(e.target.value)}
               required
             />
           </div>

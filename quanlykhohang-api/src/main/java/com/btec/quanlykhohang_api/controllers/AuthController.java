@@ -23,25 +23,32 @@ public class AuthController {
     @Autowired private BCryptPasswordEncoder passwordEncoder;
 
     @PostMapping("/register")
-    public String register(@RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
+        // 1️⃣ Kiểm tra xem email đã tồn tại chưa
+        Optional<User> existingUser = userRepository.findByEmail(registerRequest.getEmail());
+        if (existingUser.isPresent()) {
+            return ResponseEntity.badRequest().body("Email already registered");
+        }
+
+        // 2️⃣ Kiểm tra password và confirmPassword
         if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
-            return "Password and Confirm Password do not match";
+            return ResponseEntity.badRequest().body("Passwords do not match");
         }
 
-        Optional<User> existingUserOptional = userRepository.findByEmail(registerRequest.getEmail());
-        if (existingUserOptional.isPresent()) {
-            return "Email already registered";
-        }
+        // 3️⃣ Mã hóa password
+        String encodedPassword = passwordEncoder.encode(registerRequest.getPassword());
 
+        // 4️⃣ Tạo User mới
         User newUser = new User();
         newUser.setFullname(registerRequest.getFullName());
         newUser.setEmail(registerRequest.getEmail());
-        newUser.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        newUser.setActive(true);
+        newUser.setPassword(encodedPassword);
+        newUser.setRole("USER"); // Mặc định role là USER, bạn có thể chỉnh sửa
 
+        // 5️⃣ Lưu vào database
         userRepository.save(newUser);
 
-        return "User registered successfully";
+        return ResponseEntity.ok("User registered successfully");
     }
 
     @PostMapping("/login")
