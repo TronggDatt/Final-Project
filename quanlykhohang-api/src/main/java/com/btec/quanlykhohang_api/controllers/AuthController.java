@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "https://chinesechessgame.io.vn/"})
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {

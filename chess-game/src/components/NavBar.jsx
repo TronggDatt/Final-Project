@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   FaHome,
@@ -6,36 +6,43 @@ import {
   FaInfoCircle,
   FaSignInAlt,
   FaUserPlus,
-  // FaUser,
   FaSignOutAlt,
 } from "react-icons/fa";
 
 const NavBar = () => {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user")); // Kiểm tra trạng thái đăng nhập
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    setUser(storedUser);
+  }, []);
 
   const handlePlayClick = () => {
     if (!user) {
-      navigate("/login"); // Nếu chưa đăng nhập, chuyển hướng đến trang đăng nhập
+      navigate("/login");
     } else {
-      navigate("/game"); // Nếu đã đăng nhập, chuyển hướng vào game
+      navigate("/game");
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    setUser(null); // Cập nhật lại state
     navigate("/login");
   };
 
   return (
     <nav className="h-screen w-64 bg-gray-800 text-white flex flex-col p-4 fixed">
-      {/* Logo */}
       <h1 className="text-2xl font-bold text-center mb-6">Xiangqi Game</h1>
 
-      {/* Menu Items */}
       <ul className="space-y-4">
         <li>
-          <Link to="/" className="flex items-center gap-3 p-2 hover:bg-gray-700 rounded">
+          <Link
+            to="/"
+            className="flex items-center gap-3 p-2 hover:bg-gray-700 rounded"
+          >
             <FaHome /> Home
           </Link>
         </li>
@@ -48,7 +55,10 @@ const NavBar = () => {
           </button>
         </li>
         <li>
-          <Link to="/about" className="flex items-center gap-3 p-2 hover:bg-gray-700 rounded">
+          <Link
+            to="/about"
+            className="flex items-center gap-3 p-2 hover:bg-gray-700 rounded"
+          >
             <FaInfoCircle /> About
           </Link>
         </li>
@@ -58,7 +68,9 @@ const NavBar = () => {
       <div className="mt-auto">
         {user ? (
           <div className="border-t border-gray-600 pt-4">
-            <p className="text-center text-sm">Xin chào, <b>{user.name}</b>!</p>
+            <p className="text-center text-sm">
+              Xin chào, <b>{user.fullName || user.email}</b>!
+            </p>
             <button
               onClick={handleLogout}
               className="flex items-center gap-3 p-2 hover:bg-gray-700 rounded w-full mt-2"
@@ -69,12 +81,18 @@ const NavBar = () => {
         ) : (
           <ul className="space-y-4 border-t border-gray-600 pt-4">
             <li>
-              <Link to="/login" className="flex items-center gap-3 p-2 hover:bg-gray-700 rounded">
+              <Link
+                to="/login"
+                className="flex items-center gap-3 p-2 hover:bg-gray-700 rounded"
+              >
                 <FaSignInAlt /> Log In
               </Link>
             </li>
             <li>
-              <Link to="/register" className="flex items-center gap-3 p-2 hover:bg-gray-700 rounded">
+              <Link
+                to="/register"
+                className="flex items-center gap-3 p-2 hover:bg-gray-700 rounded"
+              >
                 <FaUserPlus /> Register
               </Link>
             </li>
