@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { register } from "../apis/api_auth"; // Import register function
 
 const Register = () => {
-  const [fullName, setfullName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -11,34 +12,18 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Kiểm tra mật khẩu nhập lại
+    // Validate password confirmation
     if (password !== confirmPassword) {
       alert("Confirmation password does not match!");
       return;
     }
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName: fullName,
-          email: email,
-          password: password,
-          confirmPassword: confirmPassword,
-        }),
-      });
-
-      if (response.ok) {
-        alert("Registration successful! Please log in.");
-        navigate("/login");
-      } else {
-        const errorMsg = await response.text();
-        alert(errorMsg);
-      }
+      await register(fullName, email, password, confirmPassword);
+      alert("Registration successful! Please log in.");
+      navigate("/login");
     } catch (error) {
-      console.error("Registration failed:", error);
-      alert("Registration failed. Please try again.");
+      alert(error.message || "Registration failed. Please try again.");
     }
   };
 
@@ -56,7 +41,7 @@ const Register = () => {
               className="w-full p-2 border border-gray-300 rounded mt-1"
               placeholder="Enter your full name"
               value={fullName}
-              onChange={(e) => setfullName(e.target.value)}
+              onChange={(e) => setFullName(e.target.value)}
               required
             />
           </div>

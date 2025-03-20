@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-// import axios from "axios";
+import { login } from "../apis/api_auth"; // Import login function from api_auth.js
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -9,36 +9,22 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     try {
-      const response = await fetch("http://localhost:8080/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("role", data.role);
-
-        alert("Login successful!");
-        if (data.role === "ADMIN") {
-          navigate("/admin");
-        } else if (data.role === "USER") {
-          navigate("/home");
-        } else {
-          // Trường hợp role lạ
-          alert("Unknown role, please contact admin.");
-        }
+      const data = await login(email, password);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+      
+      alert("Login successful!");
+      if (data.role === "ADMIN") {
+        navigate("/admin");
+      } else if (data.role === "USER") {
+        navigate("/");
       } else {
-        const errorMsg = await response.text();
-        alert(errorMsg);
+        alert("Unknown role, please contact admin.");
       }
     } catch (error) {
-      console.error("Login failed:", error);
-      alert("Login failed. Please try again.");
+      alert(error.message || "Login failed. Please try again.");
     }
   };
 
@@ -79,7 +65,7 @@ const Login = () => {
           </button>
         </form>
         <p className="text-center text-gray-600 mt-4">
-          No account yet?{" "}
+          No account yet? {" "}
           <Link to="/register" className="text-blue-500 hover:underline">
             Sign up now
           </Link>

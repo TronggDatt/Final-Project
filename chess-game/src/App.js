@@ -6,13 +6,12 @@ import {
   Navigate,
 } from "react-router-dom";
 import React from "react";
+
+import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
 import GameController from "./components/GameController";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import About from "./pages/About";
-import Layout from "./components/Layout";
-import AdminDashboard from "./components/Admin/AdminDashboard";
+import PlayPage from "./pages/PlayPage";
+import RegisterPage from "./pages/RegisterPage";
 
 // Fake role check function (có thể lấy từ localStorage, token, context, etc.)
 const getUserRole = () => {
@@ -29,22 +28,12 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="home" element={<Home />} />
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
-          <Route path="about" element={<About />} />
-          <Route path="game" element={<GameController />} />
-          <Route
-            path="admin"
-            element={
-              <PrivateAdminRoute>
-                <AdminDashboard />
-              </PrivateAdminRoute>
-            }
-          />
-        </Route>
+        <Route path="/" element={<HomePage />}/>
+        <Route path="/login" element={<LoginPage />}/>
+        <Route path="/register" element={<RegisterPage />}/>
+
+        <Route path="/game" element={<PlayPage />}/>
+
       </Routes>
     </Router>
   );

@@ -24,30 +24,20 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
-        // 1️⃣ Kiểm tra xem email đã tồn tại chưa
         Optional<User> existingUser = userRepository.findByEmail(registerRequest.getEmail());
         if (existingUser.isPresent()) {
             return ResponseEntity.badRequest().body("Email already registered");
         }
-
-        // 2️⃣ Kiểm tra password và confirmPassword
         if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
             return ResponseEntity.badRequest().body("Passwords do not match");
         }
-
-        // 3️⃣ Mã hóa password
         String encodedPassword = passwordEncoder.encode(registerRequest.getPassword());
-
-        // 4️⃣ Tạo User mới
         User newUser = new User();
         newUser.setFullname(registerRequest.getFullName());
         newUser.setEmail(registerRequest.getEmail());
         newUser.setPassword(encodedPassword);
-        newUser.setRole("USER"); // Mặc định role là USER, bạn có thể chỉnh sửa
-
-        // 5️⃣ Lưu vào database
+        newUser.setRole("USER");
         userRepository.save(newUser);
-
         return ResponseEntity.ok("User registered successfully");
     }
 
@@ -62,5 +52,26 @@ public class AuthController {
             }
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect email or password");
+    }
+
+    @GetMapping("/validate")
+    public ResponseEntity<?> validateByToken(@RequestHeader("Authorization") String token) {
+        try {
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+            boolean isValid = jwtUtil.verifyToken(token);
+            if (isValid) {
+                String email = jwtUtil.getEmailFromToken(token);
+                Optional<User> userOptional = userRepository.findByEmail(email);
+                if (userOptional.isPresent()) {
+                    User user = userOptional.get();
+                    return ResponseEntity.ok(new JwtResponse(token, user.getRole()));
+                }
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        }
     }
 }

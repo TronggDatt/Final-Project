@@ -8,18 +8,34 @@ import {
   FaUserPlus,
   FaSignOutAlt,
 } from "react-icons/fa";
+import { validateByToken } from "../apis/api_auth"; // Import API function
 
 const NavBar = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [isLogin, setIsLogin] = useState(false); // Track login state
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    setUser(storedUser);
+    const checkAuthStatus = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const data = await validateByToken(token);
+          setUser({ email: data.email, role: data.role });
+          setIsLogin(true); // User is logged in
+        } catch (error) {
+          console.error("Token validation failed:", error);
+          handleLogout();
+        }
+      } else {
+        setIsLogin(false); // No token, user is logged out
+      }
+    };
+    checkAuthStatus();
   }, []);
 
   const handlePlayClick = () => {
-    if (!user) {
+    if (!isLogin) {
       navigate("/login");
     } else {
       navigate("/game");
@@ -29,7 +45,8 @@ const NavBar = () => {
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-    setUser(null); // Cập nhật lại state
+    setUser(null);
+    setIsLogin(false); // Update login state
     navigate("/login");
   };
 
@@ -64,12 +81,12 @@ const NavBar = () => {
         </li>
       </ul>
 
-      {/* Hiển thị trạng thái đăng nhập */}
+      {/* Authentication Status */}
       <div className="mt-auto">
-        {user ? (
+        {isLogin ? (
           <div className="border-t border-gray-600 pt-4">
             <p className="text-center text-sm">
-              Xin chào, <b>{user.fullName || user.email}</b>!
+              Xin chào, <b>{user?.email}</b>!
             </p>
             <button
               onClick={handleLogout}
