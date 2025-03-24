@@ -1,6 +1,6 @@
 import React from "react";
 import NavBar from "../components/NavBar";
-import Home from "../components/Home";
+// import Home from "../components/Home";
 import Login from "../components/Login";
 
 const LoginPage = () => {
@@ -19,6 +19,4 @@ const LoginPage = () => {
   );
 };
 
-
-
-export default LoginPage
+export default LoginPage;

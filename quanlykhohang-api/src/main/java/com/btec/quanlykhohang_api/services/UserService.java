@@ -3,6 +3,10 @@ package com.btec.quanlykhohang_api.services;
 import com.btec.quanlykhohang_api.entities.User;
 import com.btec.quanlykhohang_api.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.userdetails.User.UserBuilder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,10 +14,24 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService { // Implement interface
 
     @Autowired
     private UserRepository userRepository;
+
+    // --- JWT AUTH: loadUserByUsername ---
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+
+        // Build Spring Security UserDetails
+        return org.springframework.security.core.userdetails.User.builder()
+                .username(user.getEmail())
+                .password(user.getPassword())
+                .roles(user.getRole()) // Add role if you have
+                .build();
+    }
 
     // Get all users
     public List<User> getAllUsers() {
