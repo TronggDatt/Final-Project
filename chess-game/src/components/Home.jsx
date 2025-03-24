@@ -1,11 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { validateByToken } from "../apis/api_auth"; // Import function
+import { validateByToken } from "../apis/api_auth";
 
 const Home = () => {
   const navigate = useNavigate();
 
-  const handleStartPlaying = async () => {
+  const handleNavigation = async (path) => {
     const token = localStorage.getItem("token");
 
     if (!token) {
@@ -14,30 +14,45 @@ const Home = () => {
     }
 
     try {
-      await validateByToken(token); // Call the function from api_auth.js
-      navigate("/game");
+      await validateByToken(token);
+      navigate(path);
     } catch (error) {
-      localStorage.removeItem("token"); // Remove invalid token
+      localStorage.removeItem("token");
       navigate("/login");
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <main className="flex-grow flex flex-col items-center justify-center text-center p-6">
-        <h2 className="text-3xl font-semibold text-gray-800 mb-4">
-          Welcome to Xiangqi (Chinese Chess)
-        </h2>
-        <p className="text-gray-600 max-w-lg">
-          Challenge your friends or play against the AI ​​in this tactical chess
-          game. Log in to save your progress!
-        </p>
-        <button
-          onClick={handleStartPlaying}
-          className="mt-6 px-6 py-3 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition"
-        >
-          Start playing
-        </button>
+    <div className="flex flex-col min-h-screen items-center justify-center bg-gray-100">
+      <main className="text-center p-6">
+        <h2 className="text-4xl font-bold text-red-700 mb-6">Welcome to <span className="text-black">Xiangqi.com!</span></h2>
+        
+        <div className="flex flex-col space-y-4">
+          <button 
+            onClick={() => handleNavigation("/game")}
+            className="w-72 flex items-center justify-between px-6 py-3 border-2 border-red-500 rounded-lg shadow bg-white hover:bg-red-100 transition"
+          >
+            <span className="text-lg font-semibold text-red-700">Play Online</span>
+            <span className="text-sm text-gray-600">Challenge Players Worldwide or Play with friend</span>
+          </button>
+
+          <button 
+            onClick={() => handleNavigation("/game")}
+            className="w-72 flex items-center justify-between px-6 py-3 border-2 border-red-500 rounded-lg shadow bg-white hover:bg-red-100 transition"
+          >
+            <span className="text-lg font-semibold text-red-700">Play Offline</span>
+            <span className="text-sm text-gray-600">Challenge Bot</span>
+          </button>
+
+          <button 
+            onClick={() => handleNavigation("/Log")}
+            className="w-72 flex items-center justify-between px-6 py-3 border-2 border-red-500 rounded-lg shadow bg-white hover:bg-red-100 transition"
+          >
+            <span className="text-lg font-semibold text-red-700">About</span>
+            <span className="text-sm text-gray-600">Introduction</span>
+          </button>
+
+        </div>
       </main>
     </div>
   );

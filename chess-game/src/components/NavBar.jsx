@@ -3,17 +3,21 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   FaHome,
   FaChess,
+  FaUserFriends,
+  FaRobot,
   FaInfoCircle,
   FaSignInAlt,
   FaUserPlus,
   FaSignOutAlt,
+  FaChevronRight,
 } from "react-icons/fa";
 import { validateByToken } from "../apis/api_auth"; // Import API function
 
 const NavBar = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [isLogin, setIsLogin] = useState(false); // Track login state
+  const [isLogin, setIsLogin] = useState(false);
+  const [isPlayMenuOpen, setIsPlayMenuOpen] = useState(false); // State cho menu Play
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -22,31 +26,23 @@ const NavBar = () => {
         try {
           const data = await validateByToken(token);
           setUser({ email: data.email, role: data.role });
-          setIsLogin(true); // User is logged in
+          setIsLogin(true);
         } catch (error) {
           console.error("Token validation failed:", error);
           handleLogout();
         }
       } else {
-        setIsLogin(false); // No token, user is logged out
+        setIsLogin(false);
       }
     };
     checkAuthStatus();
   }, []);
 
-  const handlePlayClick = () => {
-    if (!isLogin) {
-      navigate("/login");
-    } else {
-      navigate("/game");
-    }
-  };
-
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     setUser(null);
-    setIsLogin(false); // Update login state
+    setIsLogin(false);
     navigate("/login");
   };
 
@@ -63,14 +59,41 @@ const NavBar = () => {
             <FaHome /> Home
           </Link>
         </li>
-        <li>
+
+        {/* Menu Play với Dropdown ngang */}
+        <li
+          className="relative"
+          onMouseEnter={() => setIsPlayMenuOpen(true)}
+          onMouseLeave={() => setIsPlayMenuOpen(false)}
+        >
           <button
-            onClick={handlePlayClick}
-            className="flex items-center gap-3 p-2 hover:bg-gray-700 rounded w-full text-left"
+            onClick={() => setIsPlayMenuOpen(!isPlayMenuOpen)}
+            className="flex items-center justify-between w-full p-2 hover:bg-gray-700 rounded"
           >
-            <FaChess /> Play
+            <span className="flex items-center gap-3">
+              <FaChess /> Play
+            </span>
+            <FaChevronRight />
           </button>
+
+          {isPlayMenuOpen && (
+            <div className="absolute left-full top-0 ml-2 bg-gray-700 rounded shadow-lg w-40">
+              <button
+                onClick={() => navigate("/play/friends")}
+                className="flex items-center gap-3 w-full p-2 hover:bg-gray-600 rounded"
+              >
+                <FaUserFriends /> Play Online
+              </button>
+              <button
+                onClick={() => navigate("/play/computer")}
+                className="flex items-center gap-3 w-full p-2 hover:bg-gray-600 rounded"
+              >
+                <FaRobot /> Play Offline
+              </button>
+            </div>
+          )}
         </li>
+
         <li>
           <Link
             to="/about"

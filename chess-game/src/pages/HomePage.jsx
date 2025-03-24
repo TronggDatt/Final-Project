@@ -6,7 +6,7 @@ const HomePage = () => {
   return (
     <div className="flex min-h-screen">
       {/* Left Side - NavBar */}
-      <div className="w-1/4 bg-gray-800 text-white min-h-screen">
+      <div className="w-0 bg-gray-800 text-white min-h-screen">
         <NavBar />
       </div>
 
