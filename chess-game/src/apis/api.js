@@ -1,1 +1,1 @@
-export const BASE_URL = "https://api.chineseschessgame.io.vn"
+export const BASE_URL = "https://api.chinesechessgame.io.vn";
