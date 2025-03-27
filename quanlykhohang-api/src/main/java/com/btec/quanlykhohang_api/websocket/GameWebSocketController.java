@@ -9,8 +9,8 @@ import org.springframework.stereotype.Controller;
 public class GameWebSocketController {
     @MessageMapping("/move/{roomId}")
     @SendTo("/topic/{roomId}")
-    public ChessMove handleMove(ChessMove move, @DestinationVariable String roomId) {
-        System.out.println("Move in Room " + move.getRoomId() + ": " + move);
+    public ChessMove handleMove(@DestinationVariable String roomId, ChessMove move) {
+        System.out.println("Move in Room " + roomId + ": " + move);
         return move;
     }
 }

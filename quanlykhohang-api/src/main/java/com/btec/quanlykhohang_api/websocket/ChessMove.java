@@ -1,13 +1,19 @@
 package com.btec.quanlykhohang_api.websocket;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ChessMove {
     private String roomId;
     private String fromPosition;
     private String toPosition;
 
-    public ChessMove() {}
-
-    public ChessMove(String roomId, String fromPosition, String toPosition) {
+    @JsonCreator
+    public ChessMove(
+            @JsonProperty("roomId") String roomId,
+            @JsonProperty("fromPosition") String fromPosition,
+            @JsonProperty("toPosition") String toPosition
+    ) {
         this.roomId = roomId;
         this.fromPosition = fromPosition;
         this.toPosition = toPosition;

@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage";
 // import GameController from "./components/GameController";
 import PlayPage from "./pages/PlayPage";
 import RegisterPage from "./pages/RegisterPage";
+import Room from "./components/GameRoom";
 
 // Fake role check function (có thể lấy từ localStorage, token, context, etc.)
 // const getUserRole = () => {
@@ -29,6 +30,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/room/:id" element={<Room />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
@@ -37,6 +39,5 @@ function App() {
     </Router>
   );
 }
-
 
 export default App;
