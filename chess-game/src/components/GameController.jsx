@@ -10,11 +10,10 @@ import {
 } from "../utils/chessLogic";
 import Swal from "sweetalert2";
 import axios from "axios";
-
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 import moveSound from "../Sound/move.mp3";
 import captureSound from "../Sound/capture.mp3";
-
-
 
 const API_URL = "http://localhost:8080/games";
 // Lấy danh sách tất cả các ván cờ
@@ -101,7 +100,44 @@ class GameController extends React.Component {
     // Load âm thanh từ thư mục public
     this.moveAudio = new Audio(moveSound);
     this.captureAudio = new Audio(captureSound);
+
+    this.stompClient = null;
   }
+
+  componentDidMount() {
+    this.connectWebSocket();
+  }
+
+  componentWillUnmount() {
+    if (this.stompClient) {
+      this.stompClient.deactivate();
+    }
+  }
+
+  connectWebSocket = () => {
+    const socket = new SockJS("http://localhost:8080/ws");
+    this.stompClient = new Client({
+      webSocketFactory: () => socket,
+      reconnectDelay: 5000,
+      onConnect: this.onConnected,
+      onStompError: this.onError,
+    });
+    this.stompClient.activate();
+  };
+
+  onConnected = () => {
+    console.log("Connected to WebSocket");
+    this.stompClient.subscribe("/topic/game", this.onMessageReceived);
+  };
+
+  onError = (error) => {
+    console.error("WebSocket error:", error);
+  };
+
+  onMessageReceived = (message) => {
+    const gameState = JSON.parse(message.body);
+    this.setState({ gameState });
+  };
 
   handleSquareClick = (row, col) => {
     const { selectedPiece, gameState, currentPlayer } = this.state;
@@ -168,6 +204,8 @@ class GameController extends React.Component {
           isCheck: check,
           isCheckmate: checkmate,
         });
+
+        this.sendMoveToServer(selectedPiece, { row, col });
       }
     } else if (clickedPiece && clickedPiece.endsWith(`_${currentPlayer}`)) {
       // Chỉ chọn quân của người chơi hiện tại
@@ -199,7 +237,6 @@ class GameController extends React.Component {
     const capturedPiece = newGameState[toKey]; // Kiểm tra có ăn quân không
     newGameState[toKey] = movingPiece;
 
-    
     // Kiểm tra xem nước đi có làm tướng bị chiếu không
     if (isKingInCheck(convertGameStateToBoard(newGameState), currentPlayer)) {
       Swal.fire({
@@ -210,12 +247,12 @@ class GameController extends React.Component {
       return false;
     }
 
-     // **Phát âm thanh dựa trên loại nước đi**
-     if (capturedPiece) {
+    // **Phát âm thanh dựa trên loại nước đi**
+    if (capturedPiece) {
       this.captureAudio.play(); // Nếu ăn quân thì phát âm thanh capture
-  } else {
+    } else {
       this.moveAudio.play(); // Nếu chỉ di chuyển thì phát âm thanh move
-  }
+    }
 
     const newMove = {
       redMove:
@@ -224,7 +261,6 @@ class GameController extends React.Component {
         currentPlayer === "b" ? `${movingPiece} (${fromKey} -> ${toKey})` : "",
     };
 
-    
     this.setState((prevState) => ({
       gameState: newGameState,
       selectedPiece: null,
