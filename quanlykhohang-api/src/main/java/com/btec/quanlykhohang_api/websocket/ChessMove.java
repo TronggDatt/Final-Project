@@ -1,31 +1,49 @@
 package com.btec.quanlykhohang_api.websocket;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class ChessMove {
-    private String roomId;
-    private String fromPosition;
-    private String toPosition;
+    private String gameId;
+    private String playerId;
+    private String from;
+    private String to;
 
-    @JsonCreator
-    public ChessMove(
-            @JsonProperty("roomId") String roomId,
-            @JsonProperty("fromPosition") String fromPosition,
-            @JsonProperty("toPosition") String toPosition
-    ) {
-        this.roomId = roomId;
-        this.fromPosition = fromPosition;
-        this.toPosition = toPosition;
+    public ChessMove() {}
+
+    public ChessMove(String gameId, String playerId, String from, String to) {
+        this.gameId = gameId;
+        this.playerId = playerId;
+        this.from = from;
+        this.to = to;
     }
 
-    public String getRoomId() { return roomId; }
-    public String getFromPosition() { return fromPosition; }
-    public String getToPosition() { return toPosition; }
+    public String getGameId() {
+        return gameId;
+    }
 
-    @Override
-    public String toString() {
-        return "Move from " + fromPosition + " to " + toPosition + " in room " + roomId;
+    public void setGameId(String gameId) {
+        this.gameId = gameId;
+    }
+
+    public String getPlayerId() {
+        return playerId;
+    }
+
+    public void setPlayerId(String playerId) {
+        this.playerId = playerId;
+    }
+
+    public String getFrom() {
+        return from;
+    }
+
+    public void setFrom(String from) {
+        this.from = from;
+    }
+
+    public String getTo() {
+        return to;
+    }
+
+    public void setTo(String to) {
+        this.to = to;
     }
 }
-

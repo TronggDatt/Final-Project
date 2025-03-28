@@ -1,4 +1,8 @@
 package com.btec.quanlykhohang_api.services;
 
-public class MoveService {
+import com.btec.quanlykhohang_api.websocket.ChessMove;
+
+public interface MoveService {
+    boolean isValidMove(ChessMove move);
+    void saveMove(ChessMove move);
 }

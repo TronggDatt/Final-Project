@@ -1,59 +1,71 @@
 package com.btec.quanlykhohang_api.security;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 @Component
 public class JwtUtil {
 
-    private static final String SECRET_KEY = "Akjhsdfjkhsdfhsadhjaskdhasjkhdkjsahdjkashdjkashdjksahdjksadhsakjh";
-    private static final long EXPIRATION_TIME = 86400000; // 1 day in milliseconds
+    private String SECRET_KEY = "your_secret_key"; // Thay bằng secret key của bạn
 
-    /**
-     * Generate a JWT token for a given email.
-     *
-     * @param email The user's email.
-     * @return The JWT token.
-     */
-    public String generateToken(String email) {
+    public String getEmailFromToken(String token) {
+        return extractUsername(token);
+    }
+
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+    }
+
+    private Boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
+
+    public String generateToken(String username) {
+        Map<String, Object> claims = new HashMap<>();
+        return createToken(claims, username);
+    }
+
+    private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .setClaims(claims)
+                .setSubject(subject)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 giờ
                 .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
                 .compact();
     }
 
-    /**
-     * Verify the JWT token validity.
-     *
-     * @param token JWT token.
-     * @return true if valid, false if invalid/expired.
-     * @throws Exception If invalid token.
-     */
-    public boolean verifyToken(String token) throws Exception {
-        try {
-            Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token);
-            return true;
-        } catch (SignatureException e) {
-            throw new Exception("Invalid JWT signature");
-        } catch (ExpiredJwtException e) {
-            throw new Exception("JWT token is expired");
-        } catch (Exception e) {
-            throw new Exception("Invalid JWT token");
-        }
+    public Boolean validateToken(String token, String username) {
+        final String extractedUsername = extractUsername(token);
+        return (extractedUsername.equals(username) && !isTokenExpired(token));
     }
 
-    /**
-     * Extract email (subject) from token.
-     */
-    public String getEmailFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(SECRET_KEY)
-                .parseClaimsJws(token)
-                .getBody();
-        return claims.getSubject();
+    public Boolean verifyToken(String token) {
+        try {
+            extractAllClaims(token); // Kiểm tra tính hợp lệ của token
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

@@ -1,23 +1,25 @@
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 
-const socketUrl = "http://localhost:8080/ws"; // Chính xác backend WebSocket URL
+const socketUrl = "http://localhost:8080/ws";
 
 let stompClient = null;
 
 export const connectWebSocket = (roomId, onMoveReceived) => {
   const token = localStorage.getItem("jwtToken");
-  const socket = new SockJS(socketUrl); // Tạo SockJS kết nối với backend
+  const socket = new SockJS(socketUrl);
 
   stompClient = new Client({
     webSocketFactory: () => socket,
-    connectHeaders: token ? { Authorization: `Bearer ${token}` } : {}, // Truyền token nếu có
+    connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
     debug: (str) => console.log(str),
     reconnectDelay: 5000,
-    onConnect: () => {
-      console.log("✅ Connected to WebSocket");
-
+    heartbeatIncoming: 4000,
+    heartbeatOutgoing: 4000,
+    onConnect: (frame) => {
+      console.log("✅ Connected to WebSocket", frame);
       stompClient.subscribe(`/topic/${roomId}`, (message) => {
+        console.log("📩 Raw message:", message);
         const body = JSON.parse(message.body);
         console.log("📩 Received move:", body);
         onMoveReceived(body);
@@ -27,18 +29,20 @@ export const connectWebSocket = (roomId, onMoveReceived) => {
       console.log("❌ Disconnected from WebSocket");
     },
     onStompError: (frame) => {
-      console.error("⚠️ WebSocket error:", frame);
+      console.error("⚠️ STOMP error:", frame);
+    },
+    onWebSocketError: (error) => {
+      console.error("⚠️ WebSocket error:", error);
     },
   });
 
   stompClient.activate();
 };
 
-// Hàm gửi nước đi (move) lên server
 export const sendMove = (roomId, move) => {
   if (stompClient && stompClient.connected) {
     stompClient.publish({
-      destination: `/app/move/${roomId}`, // Phải khớp với backend @MessageMapping("/move/{roomId}")
+      destination: `/app/move/${roomId}`,
       body: JSON.stringify(move),
     });
     console.log("📤 Move sent:", move);
@@ -47,7 +51,6 @@ export const sendMove = (roomId, move) => {
   }
 };
 
-// Hàm ngắt kết nối WebSocket
 export const disconnectWebSocket = () => {
   if (stompClient) {
     stompClient.deactivate();

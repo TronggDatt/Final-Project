@@ -9,32 +9,17 @@ import React from "react";
 
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
-// import GameController from "./components/GameController";
 import PlayPage from "./pages/PlayPage";
 import RegisterPage from "./pages/RegisterPage";
-import Room from "./components/GameRoom";
-
-// Fake role check function (có thể lấy từ localStorage, token, context, etc.)
-// const getUserRole = () => {
-//   const user = JSON.parse(localStorage.getItem("user"));
-//   return user?.role || "user"; // default role
-// };
-
-// const PrivateAdminRoute = ({ children }) => {
-//   const role = getUserRole();
-//   return role === "admin" ? children : <Navigate to="/" />;
-// };
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/room/:id" element={<Room />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-
-        <Route path="/game" element={<PlayPage />} />
+        <Route path="/game/:gameId" element={<PlayPage />} />
       </Routes>
     </Router>
   );

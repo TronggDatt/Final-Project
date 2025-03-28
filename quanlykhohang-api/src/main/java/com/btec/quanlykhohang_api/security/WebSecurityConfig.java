@@ -29,6 +29,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/ws/**", "/ws-non-sockjs/**", "/raw-ws/**").permitAll()
+                        .requestMatchers("/moves/game/**").permitAll() // 🚀 Cho phép API này truy cập không cần token
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

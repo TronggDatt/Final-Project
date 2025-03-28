@@ -13,7 +13,7 @@ const Board = ({ gameState, onSquareClick, validMoves = [] }) => {
     return (
       <div
         key={key}
-        className={`w-16 h-16 flex justify-center items-center relative ${
+        className={`w-[10vw] h-[10vw] max-w-16 max-h-16 flex justify-center items-center relative ${
           isValidMove ? "bg-green-400 bg-opacity-50 rounded-lg shadow-md" : ""
         }`}
         onClick={() => onSquareClick(row, col)}
@@ -25,7 +25,7 @@ const Board = ({ gameState, onSquareClick, validMoves = [] }) => {
 
   return (
     <div
-      className="grid grid-cols-9 gap-1 p-2 w-fullbg-cover bg-center"
+      className="w-full max-w-[90vw] aspect-[9/10] mx-auto bg-cover bg-center"
       style={{
         backgroundImage: `url("/assets/tables/table.png")`,
         backgroundSize: "contain",
@@ -33,11 +33,18 @@ const Board = ({ gameState, onSquareClick, validMoves = [] }) => {
         backgroundPosition: "center",
       }}
     >
-      {Array.from({ length: 10 }, (_, rowIndex) =>
-        Array.from({ length: 9 }, (_, colIndex) =>
-          renderSquare(rowIndex, colIndex)
-        )
-      )}
+      <div className="grid grid-cols-9 grid-rows-10 w-full h-full gap-1">
+        {Array.from({ length: 10 }, (_, rowIndex) =>
+          Array.from({ length: 9 }, (_, colIndex) => (
+            <div
+              key={`${rowIndex}-${colIndex}`}
+              className="relative w-full h-full"
+            >
+              {renderSquare(rowIndex, colIndex)}
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 };

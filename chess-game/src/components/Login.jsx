@@ -9,12 +9,12 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       const data = await login(email, password);
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
-      
+
       alert("Login successful!");
       if (data.role === "ADMIN") {
         navigate("/admin");
@@ -65,7 +65,7 @@ const Login = () => {
           </button>
         </form>
         <p className="text-center text-gray-600 mt-4">
-          No account yet? {" "}
+          No account yet?{" "}
           <Link to="/register" className="text-blue-500 hover:underline">
             Sign up now
           </Link>

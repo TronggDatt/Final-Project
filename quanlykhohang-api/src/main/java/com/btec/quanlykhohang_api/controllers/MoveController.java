@@ -10,7 +10,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/moves")
 public class MoveController {
-    @Autowired private MoveRepository moveRepository;
+
+    @Autowired
+    private MoveRepository moveRepository;
 
     @PostMapping("/add")
     public Move addMove(@RequestBody Move move) {
@@ -24,4 +26,3 @@ public class MoveController {
                 .toList();
     }
 }
-

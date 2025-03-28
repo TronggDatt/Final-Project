@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   FaHome,
@@ -19,6 +19,14 @@ const NavBar = () => {
   const [isLogin, setIsLogin] = useState(false);
   const [isPlayMenuOpen, setIsPlayMenuOpen] = useState(false); // State cho menu Play
 
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    setUser(null);
+    setIsLogin(false);
+    navigate("/login");
+  }, [navigate]); // useCallback giúp giữ `handleLogout` ổn định
+
   useEffect(() => {
     const checkAuthStatus = async () => {
       const token = localStorage.getItem("token");
@@ -29,22 +37,14 @@ const NavBar = () => {
           setIsLogin(true);
         } catch (error) {
           console.error("Token validation failed:", error);
-          handleLogout();
+          handleLogout(); // Giờ không còn lỗi no-use-before-define
         }
       } else {
         setIsLogin(false);
       }
     };
     checkAuthStatus();
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    setUser(null);
-    setIsLogin(false);
-    navigate("/login");
-  };
+  }, [handleLogout]); // Giờ handleLogout ổn định hơn
 
   return (
     <nav className="h-screen w-64 bg-gray-800 text-white flex flex-col p-4 fixed">

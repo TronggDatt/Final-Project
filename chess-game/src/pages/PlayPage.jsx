@@ -1,11 +1,12 @@
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { validateByToken } from "../apis/api_auth"; // Import API function
 import NavBar from "../components/NavBar";
 import GameController from "../components/GameController";
 
 const PlayPage = () => {
   const navigate = useNavigate();
+  const { gameId } = useParams(); // Lấy gameId từ URL
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -25,7 +26,7 @@ const PlayPage = () => {
     };
 
     checkAuth();
-  }, [navigate]); // Runs when the component mounts
+  }, [navigate]);
 
   return (
     <div className="flex min-h-screen">
@@ -36,7 +37,7 @@ const PlayPage = () => {
 
       {/* Right Side - GameController Component */}
       <div className="w-3/4 p-6">
-        <GameController />
+        <GameController gameId={gameId} />
       </div>
     </div>
   );
