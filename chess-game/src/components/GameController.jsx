@@ -16,6 +16,7 @@ import {
   connectWebSocket,
   sendMove,
   sendReadyState,
+  sendChatMessage,
   disconnectWebSocket,
 } from "../WebSocket Service/websocket";
 
@@ -131,6 +132,7 @@ class GameController extends React.Component {
       gameStarted: false, // Trạng thái bắt đầu trò chơi
       readyPlayers: [],
       status: "WAITING",
+      countdown: 10,
     };
 
     this.moveAudio = new Audio(moveSound);
@@ -138,6 +140,7 @@ class GameController extends React.Component {
   }
 
   componentDidMount() {
+    this.startCountdown();
     const { gameId } = this.props;
     const email = localStorage.getItem("email");
     if (!gameId || !email) {
@@ -145,16 +148,33 @@ class GameController extends React.Component {
       return;
     }
 
-    connectWebSocket(gameId, this.handleMoveFromServer, this.handleReadyStatus);
-    console.log("🟢 Đang connect WebSocket với roomId:", gameId);
+    connectWebSocket(
+      gameId,
+      this.handleMoveFromServer,
+      this.handleReadyStatus,
+      this.handleReceiveChat
+    );
+    // console.log("🟢 Đang connect WebSocket với roomId:", gameId);
   }
 
-  handleMoveFromServer = (move) => {
+  handleMoveFromServer = (message) => {
     const myEmail = localStorage.getItem("email");
-    // Nếu nước đi là của người khác hoặc là chính mình thì vẫn xử lý
-    if (move.playerId !== myEmail) {
-      console.log("Received move from server:", move);
-      this.processMoveFromServer(move);
+
+    // Phân biệt message dạng move vs chat
+    if (message.from && message.to && message.playerId) {
+      // Đây là message MOVE
+      if (message.playerId !== myEmail) {
+        this.processMoveFromServer(message);
+      }
+    } else if (message.senderId && message.content) {
+      // Đây là CHAT message
+      const newMessage = {
+        senderId: message.senderId,
+        content: message.content,
+      };
+      this.setState((prevState) => ({
+        chatMessages: [...prevState.chatMessages, newMessage],
+      }));
     }
   };
 
@@ -170,15 +190,44 @@ class GameController extends React.Component {
   handleReady = () => {
     const playerId = localStorage.getItem("email") || "unknown";
     const isReady = !this.state.isReady;
-    this.setState({ isReady });
+    this.setState({ isReady }, () => {
+      if (isReady) this.startCountdown(); // Chỉ start nếu vừa bấm READY
+    });
 
     sendReadyState(this.state.gameId, playerId);
-    console.log("Gửi trạng thái READY:", this.state.gameId, playerId);
+    // console.log("Gửi trạng thái READY:", this.state.gameId, playerId);
+  };
+
+  handleReceiveChat = (chatMessage) => {
+    // console.log("📩 Chat nhận được:", chatMessage);
+    this.setState((prevState) => ({
+      chatMessages: [
+        ...prevState.chatMessages,
+        {
+          senderId: chatMessage.senderId,
+          content: chatMessage.content,
+        },
+      ],
+    }));
   };
 
   componentWillUnmount() {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+    }
     disconnectWebSocket();
   }
+  startCountdown = () => {
+    this.countdownInterval = setInterval(() => {
+      this.setState((prevState) => {
+        if (prevState.countdown <= 1) {
+          clearInterval(this.countdownInterval);
+          return { countdown: 0 };
+        }
+        return { countdown: prevState.countdown - 1 };
+      });
+    }, 1000);
+  };
 
   processMoveFromServer = (move) => {
     const { gameState, currentPlayer } = this.state;
@@ -266,18 +315,21 @@ class GameController extends React.Component {
       piece: this.state.gameState[`${from.col}${from.row}`],
       playerId: localStorage.getItem("email") || "unknown",
     };
-    console.log("Sending move:", move);
+    // console.log("Sending move:", move);
     sendMove(gameId, move);
   };
 
   sendChatMessage = (message) => {
     const { gameId } = this.state;
-    const chatMessage = {
-      type: "chat",
-      senderId: localStorage.getItem("email") || "unknown",
+    const playerId = localStorage.getItem("email") || "unknown";
+
+    const chatPayload = {
+      gameId: gameId,
+      senderId: playerId,
       content: message,
     };
-    sendMove(gameId, chatMessage);
+
+    sendChatMessage(gameId, playerId, chatPayload);
   };
 
   handleSquareClick = (row, col) => {
@@ -452,13 +504,14 @@ class GameController extends React.Component {
             <div className="mb-4 text-center">
               <button
                 onClick={this.handleReady}
-                className={`px-4 py-2 rounded-md text-white font-bold transition ${
+                className={`relative px-6 py-2 rounded-full font-bold transition text-white text-sm uppercase tracking-wider shadow-md ${
                   isReady
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-green-600 hover:bg-green-700"
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-green-500 hover:bg-green-600"
                 }`}
+                disabled={isReady}
               >
-                {isReady ? "Hủy Sẵn Sàng" : "Sẵn Sàng"}
+                {isReady ? `READY (${this.state.countdown})` : "READY"}
               </button>
               <p className="mt-2 text-sm text-gray-600">
                 Trạng thái phòng: {status} | Người sẵn sàng:{" "}
@@ -480,7 +533,7 @@ class GameController extends React.Component {
         <div className="w-full lg:w-1/3 h-[400px]">
           <ChatBox
             moves={moveHistory}
-            chatMessages={chatMessages}
+            messages={chatMessages}
             onSendChat={this.sendChatMessage}
           />
         </div>

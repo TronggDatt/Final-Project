@@ -1,5 +1,6 @@
 package com.btec.quanlykhohang_api.websocket;
 
+import com.btec.quanlykhohang_api.dtos.ChatMessage;
 import com.btec.quanlykhohang_api.entities.Move;
 import com.btec.quanlykhohang_api.repositories.MoveRepository;
 import lombok.AllArgsConstructor;
@@ -54,6 +55,12 @@ public class GameWebSocketController {
         // 🔁 Gửi trạng thái mới cho tất cả người trong phòng
         messagingTemplate.convertAndSend("/topic/ready/" + roomId,
                 new GameStatus(roomId, allReady ? "START" : "WAITING", new ArrayList<>(readyPlayers)));
+    }
+
+    @MessageMapping("/chat/{roomId}")
+    public void handleChat(@DestinationVariable String roomId, ChatMessage message) {
+        message.setGameId(roomId);
+        messagingTemplate.convertAndSend("/topic/chat/" + roomId, message);
     }
 
     // Gửi object trạng thái game

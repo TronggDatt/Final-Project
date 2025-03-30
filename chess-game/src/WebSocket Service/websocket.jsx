@@ -6,7 +6,12 @@ let roomId = null;
 let messageCallback = null;
 let readyCallback = null;
 
-export function connectWebSocket(gameRoomId, onMessage, onReadyStatus) {
+export function connectWebSocket(
+  gameRoomId,
+  onMessage,
+  onReadyStatus,
+  onReceiveChat
+) {
   roomId = gameRoomId;
   messageCallback = onMessage;
   readyCallback = onReadyStatus;
@@ -16,23 +21,30 @@ export function connectWebSocket(gameRoomId, onMessage, onReadyStatus) {
     webSocketFactory: () => socket,
     reconnectDelay: 5000,
     onConnect: () => {
-      console.log("✅ WebSocket connected to room:", roomId);
+      // console.log("✅ WebSocket connected to room:", roomId);
 
       // Nhận nước đi mới
       stompClient.subscribe(`/topic/${roomId}`, (message) => {
         const move = JSON.parse(message.body);
-        console.log("📩 Move nhận được:", move);
+        // console.log("📩 Move nhận được:", move);
         messageCallback(move);
       });
 
       stompClient.subscribe(`/topic/ready/${roomId}`, (message) => {
         const readyStatus = JSON.parse(message.body);
-        console.log("📩 Ready status:", readyStatus);
+        // console.log("📩 Ready status:", readyStatus);
         readyCallback(readyStatus);
+      });
+
+      // Nhận tin nhắn chat
+      stompClient.subscribe(`/topic/chat/${roomId}`, (message) => {
+        const chat = JSON.parse(message.body);
+        // console.log("📨 Nhận chat từ WebSocket:", chat);
+        onReceiveChat && onReceiveChat(chat);
       });
     },
     onStompError: (frame) => {
-      console.error("❌ STOMP error", frame);
+      // console.error("❌ STOMP error", frame);
     },
   });
 
@@ -42,7 +54,7 @@ export function connectWebSocket(gameRoomId, onMessage, onReadyStatus) {
 // Gửi nước đi
 export function sendMove(gameId, moveData) {
   if (stompClient && stompClient.connected) {
-    console.log("Sending move:", moveData);
+    // console.log("Sending move:", moveData);
     stompClient.publish({
       destination: `/app/move/${gameId}`,
       body: JSON.stringify(moveData),
@@ -60,10 +72,19 @@ export function sendReadyState(gameId, playerId) {
   }
 }
 
+export const sendChatMessage = (roomId, playerId, message) => {
+  if (stompClient && stompClient.connected) {
+    stompClient.publish({
+      destination: `/app/chat/${roomId}`,
+      body: JSON.stringify(message),
+    });
+  }
+};
+
 // Ngắt kết nối WebSocket
 export function disconnectWebSocket() {
   if (stompClient) {
     stompClient.deactivate();
-    console.log("🛑 Disconnected from WebSocket");
+    // console.log("🛑 Disconnected from WebSocket");
   }
 }
