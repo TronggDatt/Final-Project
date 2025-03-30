@@ -131,7 +131,7 @@ const NavBar = () => {
           {isLogin ? (
             <div className="border-t border-gray-600 pt-4">
               <p className="text-center text-sm">
-                Hello, <b>{user?.email}</b>
+                Hello, <b>{user?.fullname}</b>
               </p>
               <button
                 onClick={handleLogout}

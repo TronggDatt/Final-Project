@@ -81,7 +81,7 @@ const Home = () => {
           </button>
 
           <button
-            onClick={() => handleNavigation("/Log")}
+            onClick={() => handleNavigation("/about")}
             className="px-6 py-3 border-2 border-red-500 rounded-lg shadow bg-white hover:bg-red-100 transition"
           >
             <span className="block text-lg font-semibold text-red-700">
