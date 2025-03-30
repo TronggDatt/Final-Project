@@ -15,6 +15,14 @@ const Login = () => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
       localStorage.setItem("email", email);
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          email,
+          role: data.role,
+          fullname: data.fullname,
+        })
+      );
 
       alert("Login successful!");
       if (data.role === "ADMIN") {

@@ -1,8 +1,5 @@
-// const BASE_URL =
-
 import { BASE_URL } from "./api";
 
-//   process.env.REACT_APP_BASE_URL || "https://api.chineseschessgame.io.vn";
 const API_BASE_URL = `${BASE_URL}/api/auth`;
 
 export const register = async (fullName, email, password, confirmPassword) => {
@@ -63,7 +60,9 @@ export const validateByToken = async (token) => {
       throw new Error(await response.text());
     }
 
-    return await response.json();
+    const data = await response.json();
+
+    return data;
   } catch (error) {
     console.error("Token validation failed:", error.message);
     throw error;

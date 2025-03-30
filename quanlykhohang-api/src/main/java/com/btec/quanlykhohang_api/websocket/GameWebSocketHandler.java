@@ -25,7 +25,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             String roomId = session.getId();
             rooms.put(roomId, session.getId());
             players.put(session.getId(), session);
-            session.sendMessage(new TextMessage("ROOM_CREATED " + roomId));
+//            session.sendMessage(new TextMessage("ROOM_CREATED " + roomId));
         }
         else if (payload.startsWith("JOIN_ROOM")) {
             String[] parts = payload.split(" ");
@@ -34,7 +34,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
             if (rooms.containsKey(roomId)) {
                 players.put(session.getId(), session);
-                session.sendMessage(new TextMessage("JOINED " + roomId));
+//                session.sendMessage(new TextMessage("JOINED " + roomId));
             } else {
                 session.sendMessage(new TextMessage("ROOM_NOT_FOUND"));
             }

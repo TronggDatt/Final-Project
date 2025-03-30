@@ -19,7 +19,7 @@ const NavBar = () => {
   const [user, setUser] = useState(null);
   const [isLogin, setIsLogin] = useState(false);
   const [isPlayMenuOpen, setIsPlayMenuOpen] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // NEW
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem("user");
@@ -32,10 +32,23 @@ const NavBar = () => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       const token = localStorage.getItem("token");
-      if (token) {
+      const localUser = JSON.parse(localStorage.getItem("user"));
+
+      if (token && localUser) {
+        setUser(localUser);
+        setIsLogin(true);
+      } else if (token) {
         try {
           const data = await validateByToken(token);
-          setUser({ email: data.email, role: data.role });
+          const userObj = {
+            email: data.email || data.username || "",
+            role: data.role,
+            fullname: data.fullname || "",
+          };
+
+          localStorage.setItem("user", JSON.stringify(userObj));
+
+          setUser(userObj);
           setIsLogin(true);
         } catch (error) {
           console.error("Token validation failed:", error);
@@ -45,6 +58,7 @@ const NavBar = () => {
         setIsLogin(false);
       }
     };
+
     checkAuthStatus();
   }, [handleLogout]);
 
@@ -131,7 +145,7 @@ const NavBar = () => {
           {isLogin ? (
             <div className="border-t border-gray-600 pt-4">
               <p className="text-center text-sm">
-                Hello, <b>{user?.fullname}</b>
+                Hello, <b>{user?.fullname || user?.email}</b>
               </p>
               <button
                 onClick={handleLogout}

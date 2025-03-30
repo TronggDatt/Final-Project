@@ -9,7 +9,6 @@ import com.btec.quanlykhohang_api.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,9 +18,12 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    @Autowired private UserRepository userRepository;
-    @Autowired private JwtUtil jwtUtil;
-    @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
@@ -49,8 +51,11 @@ public class AuthController {
             User existingUser = existingUserOptional.get();
             if (passwordEncoder.matches(loginRequest.getPassword(), existingUser.getPassword())) {
                 String token = jwtUtil.generateToken(existingUser.getEmail());
-                return ResponseEntity.ok(new JwtResponse(token, existingUser.getRole()));
+                return ResponseEntity.ok(new JwtResponse(token, existingUser.getRole(), existingUser.getFullname()));
+
             }
+            System.out.println("Fullname is: " + existingUser.getFullname());
+
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect email or password");
     }
@@ -67,7 +72,7 @@ public class AuthController {
                 Optional<User> userOptional = userRepository.findByEmail(email);
                 if (userOptional.isPresent()) {
                     User user = userOptional.get();
-                    return ResponseEntity.ok(new JwtResponse(token, user.getRole()));
+                    return ResponseEntity.ok(new JwtResponse(token, user.getRole(), user.getFullname()));
                 }
             }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
