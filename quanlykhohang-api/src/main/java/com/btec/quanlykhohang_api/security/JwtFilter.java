@@ -31,7 +31,11 @@ public class JwtFilter extends OncePerRequestFilter {
         String requestPath = request.getRequestURI();
 
         // ✅ Skip kiểm tra JWT cho login và register
-        if (requestPath.startsWith("/api/auth/")) {
+        if (requestPath.startsWith("/api/auth/") ||
+                requestPath.startsWith("/api/games/") ||
+                requestPath.startsWith("/moves/game/") ||
+                requestPath.startsWith("/ws/") ||
+                requestPath.startsWith("/actuator/")) {
             filterChain.doFilter(request, response);
             return;
         }

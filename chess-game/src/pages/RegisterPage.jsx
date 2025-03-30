@@ -1,7 +1,7 @@
 import React from "react";
 import NavBar from "../components/NavBar";
-import Home from "../components/Home";
-import Login from "../components/Login";
+// import Home from "../components/Home";
+// import Login from "../components/Login";
 import Register from "../components/Register";
 
 const RegisterPage = () => {
@@ -20,7 +20,4 @@ const RegisterPage = () => {
   );
 };
 
-
-
-
-export default RegisterPage
+export default RegisterPage;

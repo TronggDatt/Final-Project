@@ -22,7 +22,7 @@ public class MoveController {
     @GetMapping("/game/{gameId}")
     public List<Move> getMoves(@PathVariable String gameId) {
         return moveRepository.findAll().stream()
-                .filter(m -> m.getGameId().equals(gameId))
+                .filter(m -> m.getRoomId().equals(gameId))
                 .toList();
     }
 }

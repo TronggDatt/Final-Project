@@ -1,60 +1,55 @@
 package com.btec.quanlykhohang_api.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
+@Document(collection = "move")
 public class Move {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    private String gameId; // Thêm trường gameId
+    private Position from;
+    private Position to;
+    private String piece;
+    private String roomId;
     private String playerId;
-    private String fromPosition;
-    private String toPosition;
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
+    public Move() {}
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getGameId() {
-        return gameId;
-    }
-
-    public void setGameId(String gameId) {
-        this.gameId = gameId;
-    }
-
-    public String getPlayerId() {
-        return playerId;
-    }
-
-    public void setPlayerId(String playerId) {
+    public Move(Position from, Position to, String piece, String roomId, String playerId) {
+        this.from = from;
+        this.to = to;
+        this.piece = piece;
+        this.roomId = roomId;
         this.playerId = playerId;
     }
 
-    public String getFromPosition() {
-        return fromPosition;
-    }
+    public Position getFrom() { return from; }
+    public void setFrom(Position from) { this.from = from; }
 
-    public void setFromPosition(String fromPosition) {
-        this.fromPosition = fromPosition;
-    }
+    public Position getTo() { return to; }
+    public void setTo(Position to) { this.to = to; }
 
-    public String getToPosition() {
-        return toPosition;
-    }
+    public String getPiece() { return piece; }
+    public void setPiece(String piece) { this.piece = piece; }
 
-    public void setToPosition(String toPosition) {
-        this.toPosition = toPosition;
+    public String getRoomId() { return roomId; }
+    public void setRoomId(String roomId) { this.roomId = roomId; }
+
+    public String getPlayerId() { return playerId; }
+    public void setPlayerId(String playerId) { this.playerId = playerId; }
+
+    public static class Position {
+        private int row;
+        private int col;
+
+        public Position() {}
+
+        public Position(int row, int col) {
+            this.row = row;
+            this.col = col;
+        }
+
+        public int getRow() { return row; }
+        public void setRow(int row) { this.row = row; }
+
+        public int getCol() { return col; }
+        public void setCol(int col) { this.col = col; }
     }
 }

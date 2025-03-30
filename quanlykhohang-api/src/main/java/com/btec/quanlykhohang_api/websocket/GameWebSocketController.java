@@ -1,68 +1,68 @@
 package com.btec.quanlykhohang_api.websocket;
 
-import com.btec.quanlykhohang_api.dtos.ChatMessage;
 import com.btec.quanlykhohang_api.entities.Move;
 import com.btec.quanlykhohang_api.repositories.MoveRepository;
-import com.btec.quanlykhohang_api.security.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 
 @Controller
 public class GameWebSocketController {
+    private final SimpMessagingTemplate messagingTemplate;
+    private final MoveRepository moveRepository;
 
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    // Map<roomId, Set<playerId>>
+    private final Map<String, Set<String>> roomReadyMap = new HashMap<>();
 
-    @Autowired
-    private MoveRepository moveRepository;
-
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    // Quản lý trạng thái "Sẵn sàng" của từng phòng
-    private final Map<String, Map<String, Boolean>> gameReadyStatus = new ConcurrentHashMap<>();
-
-    @MessageMapping("/move/{gameId}")
-    public void handleMove(@DestinationVariable String gameId, @Payload ChessMove move) {
-        // Lưu nước đi vào database
-        Move moveEntity = new Move();
-        moveEntity.setGameId(gameId);
-        moveEntity.setPlayerId(move.getPlayerId());
-        moveEntity.setFromPosition(move.getFrom());
-        moveEntity.setToPosition(move.getTo());
-        moveRepository.save(moveEntity);
-
-        // Broadcast nước đi đến tất cả client trong phòng
-        System.out.println("📤 Broadcasting move to /topic/" + gameId);
-        messagingTemplate.convertAndSend("/topic/" + gameId, move);
+    public GameWebSocketController(SimpMessagingTemplate messagingTemplate, MoveRepository moveRepository) {
+        this.messagingTemplate = messagingTemplate;
+        this.moveRepository = moveRepository;
     }
 
-    @MessageMapping("/chat/{gameId}")
-    public void handleChat(@DestinationVariable String gameId, @Payload ChatMessage chatMessage) {
-        // Broadcast tin nhắn chat đến tất cả client trong phòng
-        messagingTemplate.convertAndSend("/topic/" + gameId, chatMessage);
+    // Gửi nước đi tới tất cả người chơi trong phòng
+    @MessageMapping("/move/{roomId}")
+    public void handleMove(@DestinationVariable String roomId, Move move) {
+        move.setRoomId(roomId); // đảm bảo roomId có trong move
+        moveRepository.save(move); // 👉 Lưu vào MongoDB
+
+        messagingTemplate.convertAndSend("/topic/" + roomId, move);
     }
 
-    @MessageMapping("/ready/{gameId}/{playerId}")
-    public void handleReady(@DestinationVariable String gameId, @DestinationVariable String playerId, @Payload boolean isReady) {
-        gameReadyStatus.putIfAbsent(gameId, new ConcurrentHashMap<>());
-        Map<String, Boolean> playersReady = gameReadyStatus.get(gameId);
+    // Người chơi gửi trạng thái Ready
+    @MessageMapping("/ready/{roomId}/{playerId}")
+    public void handleReadyState(
+            @DestinationVariable String roomId,
+            @DestinationVariable String playerId
+    ) {
+        roomReadyMap.putIfAbsent(roomId, new HashSet<>());
+        Set<String> readyPlayers = roomReadyMap.get(roomId);
 
-        playersReady.put(playerId, isReady);
-
-        // Kiểm tra nếu cả hai người chơi đã sẵn sàng
-        if (playersReady.size() == 2 && playersReady.values().stream().allMatch(ready -> ready)) {
-            messagingTemplate.convertAndSend("/topic/" + gameId, "{\"type\": \"startGame\", \"gameId\": \"" + gameId + "\"}");
-            System.out.println("🎮 Game started in room: " + gameId);
+        if (readyPlayers.contains(playerId)) {
+            readyPlayers.remove(playerId); // toggle off
         } else {
-            messagingTemplate.convertAndSend("/topic/" + gameId, "{\"type\": \"waiting\", \"gameId\": \"" + gameId + "\"}");
+            readyPlayers.add(playerId); // toggle on
         }
+
+        boolean allReady = readyPlayers.size() >= 2;
+
+        // 🔁 Gửi trạng thái mới cho tất cả người trong phòng
+        messagingTemplate.convertAndSend("/topic/ready/" + roomId,
+                new GameStatus(roomId, allReady ? "START" : "WAITING", new ArrayList<>(readyPlayers)));
+    }
+
+    // Gửi object trạng thái game
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class GameStatus {
+        private String roomId;
+        private String status; // "WAITING" or "START"
+        private List<String> readyPlayers; // danh sách người đã ready
     }
 }

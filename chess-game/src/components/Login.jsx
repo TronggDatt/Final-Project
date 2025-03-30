@@ -14,6 +14,7 @@ const Login = () => {
       const data = await login(email, password);
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
+      localStorage.setItem("email", email);
 
       alert("Login successful!");
       if (data.role === "ADMIN") {

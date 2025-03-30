@@ -1,99 +1,69 @@
 package com.btec.quanlykhohang_api.websocket;
 
-import com.btec.quanlykhohang_api.dtos.ChatMessage;
-import com.btec.quanlykhohang_api.services.MoveService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 public class GameWebSocketHandler extends TextWebSocketHandler {
 
-    private final Map<String, List<WebSocketSession>> rooms = new HashMap<>();
-
-    @Autowired
-    private MoveService moveService;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Map<String, WebSocketSession> players = new ConcurrentHashMap<>();
+    private final Map<String, String> rooms = new ConcurrentHashMap<>();
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        String roomId = extractRoomId(session);
-        String playerId = (String) session.getAttributes().get("playerId");
-
-        rooms.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>()).add(session);
-        broadcastToRoom(roomId, "Player " + playerId + " has joined the room", session);
+    public void afterConnectionEstablished(WebSocketSession session) {
+        System.out.println("Người chơi kết nối: " + session.getId());
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        String roomId = extractRoomId(session);
-        String playerId = (String) session.getAttributes().get("playerId");
         String payload = message.getPayload();
+        System.out.println("Nhận tin nhắn: " + payload);
 
-        Map<String, String> messageData = objectMapper.readValue(payload, Map.class);
-        String type = messageData.get("type");
+        if (payload.startsWith("CREATE_ROOM")) {
+            String roomId = session.getId();
+            rooms.put(roomId, session.getId());
+            players.put(session.getId(), session);
+            session.sendMessage(new TextMessage("ROOM_CREATED " + roomId));
+        }
+        else if (payload.startsWith("JOIN_ROOM")) {
+            String[] parts = payload.split(" ");
+            if (parts.length < 2) return;
+            String roomId = parts[1];
 
-        if ("chat".equals(type)) {
-            ChatMessage chatMessage = new ChatMessage(roomId, playerId, messageData.get("content"));
-            String chatPayload = objectMapper.writeValueAsString(chatMessage);
-            broadcastToRoom(roomId, chatPayload, session);
-        } else if ("move".equals(type)) {
-            ChessMove chessMove = new ChessMove(
-                    roomId, // Vẫn dùng roomId từ WebSocket, nhưng ánh xạ sang gameId trong ChessMove
-                    playerId,
-                    messageData.get("from"),
-                    messageData.get("to")
-            );
-
-            if (moveService.isValidMove(chessMove)) {
-                moveService.saveMove(chessMove);
-                String movePayload = objectMapper.writeValueAsString(chessMove);
-                broadcastToRoom(roomId, movePayload, session);
+            if (rooms.containsKey(roomId)) {
+                players.put(session.getId(), session);
+                session.sendMessage(new TextMessage("JOINED " + roomId));
             } else {
-                session.sendMessage(new TextMessage("Invalid move"));
+                session.sendMessage(new TextMessage("ROOM_NOT_FOUND"));
             }
+        }
+        else if (payload.startsWith("MOVE")) {
+            broadcastMove(payload);
+        }
+        else if (payload.startsWith("CHAT")) {
+            broadcastChat(payload);
         }
     }
 
-    @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        String roomId = extractRoomId(session);
-        String playerId = (String) session.getAttributes().get("playerId");
-
-        List<WebSocketSession> roomSessions = rooms.get(roomId);
-        if (roomSessions != null) {
-            roomSessions.remove(session);
-            if (roomSessions.isEmpty()) {
-                rooms.remove(roomId);
+    private void broadcastMove(String move) {
+        players.values().forEach(session -> {
+            try {
+                session.sendMessage(new TextMessage("MOVE " + move));
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }
-
-        broadcastToRoom(roomId, "Player " + playerId + " has left the room", session);
+        });
     }
 
-    private void broadcastToRoom(String roomId, String message, WebSocketSession sender) throws Exception {
-        List<WebSocketSession> roomSessions = rooms.get(roomId);
-        if (roomSessions != null) {
-            for (WebSocketSession session : roomSessions) {
-                if (session.isOpen() && !session.equals(sender)) {
-                    session.sendMessage(new TextMessage(message));
-                }
+    private void broadcastChat(String chatMessage) {
+        players.values().forEach(session -> {
+            try {
+                session.sendMessage(new TextMessage("CHAT " + chatMessage));
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }
-    }
-
-    private String extractRoomId(WebSocketSession session) {
-        String path = session.getUri().getPath();
-        return path.substring(path.lastIndexOf("/") + 1);
+        });
     }
 }

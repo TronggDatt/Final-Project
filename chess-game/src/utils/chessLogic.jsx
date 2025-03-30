@@ -19,7 +19,9 @@ export const convertGameStateToBoard = (gameState) => {
   for (const key in gameState) {
     const col = parseInt(key[0], 10);
     const row = parseInt(key[1], 10);
-    board[row][col] = gameState[key];
+    if (!isNaN(col) && !isNaN(row)) {
+      board[row][col] = gameState[key];
+    }
   }
   return board;
 };

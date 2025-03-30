@@ -15,11 +15,12 @@ import captureSound from "../Sound/capture.mp3";
 import {
   connectWebSocket,
   sendMove,
+  sendReadyState,
   disconnectWebSocket,
 } from "../WebSocket Service/websocket";
 
-const API_URL = "http://localhost:8080/games";
-const MOVE_API_URL = "http://localhost:8080/moves";
+const API_URL = "http://localhost:8081/games";
+const MOVE_API_URL = "http://localhost:8081/moves";
 
 // Lấy danh sách tất cả các ván cờ
 export const getAllGames = async () => {
@@ -124,8 +125,12 @@ class GameController extends React.Component {
       isCheckmate: false,
       moveHistory: [],
       chatMessages: [],
-      gameId: null,
+      gameId: props.gameId || null,
       error: null,
+      isReady: false, // Trạng thái sẵn sàng của người chơi
+      gameStarted: false, // Trạng thái bắt đầu trò chơi
+      readyPlayers: [],
+      status: "WAITING",
     };
 
     this.moveAudio = new Audio(moveSound);
@@ -134,35 +139,51 @@ class GameController extends React.Component {
 
   componentDidMount() {
     const { gameId } = this.props;
-    if (gameId) {
-      this.setState({ gameId }, () => {
-        connectWebSocket(gameId, this.handleMessageFromServer);
-        this.fetchMoves();
-      });
+    const email = localStorage.getItem("email");
+    if (!gameId || !email) {
+      console.error("❌ Không có gameId hoặc email.");
+      return;
     }
+
+    connectWebSocket(gameId, this.handleMoveFromServer, this.handleReadyStatus);
+    console.log("🟢 Đang connect WebSocket với roomId:", gameId);
   }
+
+  handleMoveFromServer = (move) => {
+    const myEmail = localStorage.getItem("email");
+    // Nếu nước đi là của người khác hoặc là chính mình thì vẫn xử lý
+    if (move.playerId !== myEmail) {
+      console.log("Received move from server:", move);
+      this.processMoveFromServer(move);
+    }
+  };
+
+  handleReadyStatus = (readyState) => {
+    const { status, readyPlayers } = readyState;
+    this.setState({
+      readyPlayers,
+      status,
+      gameStarted: status === "START",
+    });
+  };
+
+  handleReady = () => {
+    const playerId = localStorage.getItem("email") || "unknown";
+    const isReady = !this.state.isReady;
+    this.setState({ isReady });
+
+    sendReadyState(this.state.gameId, playerId);
+    console.log("Gửi trạng thái READY:", this.state.gameId, playerId);
+  };
 
   componentWillUnmount() {
     disconnectWebSocket();
   }
 
-  handleMessageFromServer = (message) => {
-    if (message.type === "chat") {
-      this.setState((prevState) => ({
-        chatMessages: [
-          ...prevState.chatMessages,
-          `Chat from ${message.senderId}: ${message.content}`,
-        ],
-      }));
-    } else if (message.from && message.to) {
-      this.handleMoveFromServer(message);
-    }
-  };
-
-  handleMoveFromServer = (move) => {
+  processMoveFromServer = (move) => {
     const { gameState, currentPlayer } = this.state;
-    const fromKey = `${move.from[1]}${move.from[0]}`;
-    const toKey = `${move.to[1]}${move.to[0]}`;
+    const fromKey = `${move.from.col}${move.from.row}`;
+    const toKey = `${move.to.col}${move.to.row}`;
     const movingPiece = gameState[fromKey];
     const newGameState = { ...gameState };
     delete newGameState[fromKey];
@@ -239,15 +260,13 @@ class GameController extends React.Component {
 
   sendMoveToServer = (from, to) => {
     const { gameId } = this.state;
-    const fromPos = `${String.fromCharCode(101 + parseInt(from.col))}${
-      from.row
-    }`;
-    const toPos = `${String.fromCharCode(101 + parseInt(to.col))}${to.row}`;
     const move = {
-      from: fromPos,
-      to: toPos,
+      from: { row: from.row, col: from.col },
+      to: { row: to.row, col: to.col },
+      piece: this.state.gameState[`${from.col}${from.row}`],
       playerId: localStorage.getItem("email") || "unknown",
     };
+    console.log("Sending move:", move);
     sendMove(gameId, move);
   };
 
@@ -401,32 +420,64 @@ class GameController extends React.Component {
       moveHistory,
       chatMessages,
       error,
+      isReady,
+      gameStarted,
+      readyPlayers,
+      status,
     } = this.state;
 
     return (
-      <div className="flex justify-center mt-10">
-        <div className="flex flex-col items-center">
+      <div className="flex flex-col lg:flex-row justify-center items-start gap-6 p-4 w-full">
+        {/* Game + Info Section */}
+        <div className="flex flex-col items-center w-full lg:w-2/3">
           {error && <p className="text-red-500 font-bold mb-2">{error}</p>}
+
           <p className="text-lg font-bold mb-2">
             Player: {currentPlayer === "r" ? "Red" : "Black"}
           </p>
+
           {isCheck && (
             <p className="text-red-500 font-bold">
               Cảnh báo: Tướng đang bị chiếu!
             </p>
           )}
+
           {isCheckmate && (
             <p className="text-red-600 font-bold">
               Checkmate! {currentPlayer === "r" ? "Red" : "Black"} win!
             </p>
           )}
-          <Board
-            gameState={gameState}
-            onSquareClick={this.handleSquareClick}
-            validMoves={validMoves}
-          />
+
+          {!gameStarted && (
+            <div className="mb-4 text-center">
+              <button
+                onClick={this.handleReady}
+                className={`px-4 py-2 rounded-md text-white font-bold transition ${
+                  isReady
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-green-600 hover:bg-green-700"
+                }`}
+              >
+                {isReady ? "Hủy Sẵn Sàng" : "Sẵn Sàng"}
+              </button>
+              <p className="mt-2 text-sm text-gray-600">
+                Trạng thái phòng: {status} | Người sẵn sàng:{" "}
+                {readyPlayers.length}/2
+              </p>
+            </div>
+          )}
+
+          <div className="w-full max-w-[500px] aspect-[9/10]">
+            <Board
+              gameState={gameState}
+              onSquareClick={this.handleSquareClick}
+              validMoves={validMoves}
+            />
+          </div>
         </div>
-        <div className="w-96 h-80 ml-6">
+
+        {/* Chat Section */}
+        <div className="w-full lg:w-1/3 h-[400px]">
           <ChatBox
             moves={moveHistory}
             chatMessages={chatMessages}
