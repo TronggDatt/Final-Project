@@ -4,11 +4,12 @@ import { FaHome } from "react-icons/fa";
 
 const About = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center p-8 pl-72">
-      <div className="bg-white rounded-2xl shadow-xl p-12 max-w-3xl text-center">
-        <h1 className="text-4xl font-bold text-gray-800 mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center p-6">
+      <div className="bg-white rounded-2xl shadow-xl p-10 max-w-3xl text-center">
+        <h1 className="text-4xl font-bold text-gray-800 mb-6">
           About Xiangqi Game
         </h1>
+
         <p className="text-gray-700 text-lg leading-relaxed">
           Welcome to the{" "}
           <span className="font-semibold text-indigo-600">Xiangqi Game</span>!
@@ -42,7 +43,7 @@ const About = () => {
         </p>
 
         <Link to="/" className="inline-block mt-8">
-          <button className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-full hover:bg-indigo-700 transition duration-300">
+          <button className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2 rounded-full hover:bg-indigo-700 transition">
             <FaHome /> Back to Home
           </button>
         </Link>

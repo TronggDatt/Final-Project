@@ -1,17 +1,11 @@
 import React from "react";
-import NavBar from "../components/NavBar";
 import Home from "../components/Home";
 
 const HomePage = () => {
   return (
-    <div className="flex min-h-screen">
-      {/* Left Side - NavBar */}
-      <div className="w-0 bg-gray-800 text-white min-h-screen">
-        <NavBar />
-      </div>
-
+    <div className="flex flex-col lg:flex-row min-h-screen">
       {/* Right Side - Home Component */}
-      <div className="w-3/4 p-6">
+      <div className="flex-grow p-4">
         <Home />
       </div>
     </div>

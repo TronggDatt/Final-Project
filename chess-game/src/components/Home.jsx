@@ -50,43 +50,50 @@ const Home = () => {
 
   return (
     <div className="flex flex-col min-h-screen items-center justify-center bg-gray-100">
-      <main className="text-center p-6">
+      <main className="text-center p-4">
         <h2 className="text-4xl font-bold text-red-700 mb-6">
           Welcome to <span className="text-black">Xiangqi.com!</span>
         </h2>
 
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col space-y-4 max-w-md mx-auto">
           <button
             onClick={() => setShowModal(true)}
-            className="w-72 flex items-center justify-between px-6 py-3 border-2 border-red-500 rounded-lg shadow bg-white hover:bg-red-100 transition"
+            className="px-6 py-3 border-2 border-red-500 rounded-lg shadow bg-white hover:bg-red-100 transition"
           >
-            <span className="text-lg font-semibold text-red-700">
+            <span className="block text-lg font-semibold text-red-700">
               Play Online
             </span>
-            <span className="text-sm text-gray-600">
+            <span className="block text-sm text-gray-600 mt-1">
               Challenge Players Worldwide or Play with friend
             </span>
           </button>
 
           <button
             onClick={() => handleNavigation("/game")}
-            className="w-72 flex items-center justify-between px-6 py-3 border-2 border-red-500 rounded-lg shadow bg-white hover:bg-red-100 transition"
+            className="px-6 py-3 border-2 border-red-500 rounded-lg shadow bg-white hover:bg-red-100 transition"
           >
-            <span className="text-lg font-semibold text-red-700">
+            <span className="block text-lg font-semibold text-red-700">
               Play Offline
             </span>
-            <span className="text-sm text-gray-600">Challenge Bot</span>
+            <span className="block text-sm text-gray-600 mt-1">
+              Challenge Bot
+            </span>
           </button>
 
           <button
             onClick={() => handleNavigation("/Log")}
-            className="w-72 flex items-center justify-between px-6 py-3 border-2 border-red-500 rounded-lg shadow bg-white hover:bg-red-100 transition"
+            className="px-6 py-3 border-2 border-red-500 rounded-lg shadow bg-white hover:bg-red-100 transition"
           >
-            <span className="text-lg font-semibold text-red-700">About</span>
-            <span className="text-sm text-gray-600">Introduction</span>
+            <span className="block text-lg font-semibold text-red-700">
+              About
+            </span>
+            <span className="block text-sm text-gray-600 mt-1">
+              Introduction
+            </span>
           </button>
         </div>
       </main>
+
       {/* Modal chọn "Tạo Room" hoặc "Nhập Room" */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">

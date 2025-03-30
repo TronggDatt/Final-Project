@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { validateByToken } from "../apis/api_auth";
-import NavBar from "../components/NavBar";
+// import NavBar from "../components/NavBar";
 import GameController from "../components/GameController";
 
 const PlayPage = () => {
@@ -64,15 +64,15 @@ const PlayPage = () => {
               showNav ? "translate-x-0" : "-translate-x-full"
             }`}
           >
-            <NavBar />
+            {/* <NavBar /> */}
           </div>
         </>
       )}
 
       {/* ❗ Landscape mode: NavBar cố định */}
       {!isPortrait && (
-        <div className="w-full lg:w-1/4 bg-gray-800 text-white min-h-screen">
-          <NavBar />
+        <div className="flex flex-col lg:flex-row min-h-screen">
+          {/* <NavBar /> */}
         </div>
       )}
 
