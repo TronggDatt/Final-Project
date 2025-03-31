@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import { register } from "../apis/api_auth"; // Import register function
 
 const Register = () => {
@@ -14,16 +15,31 @@ const Register = () => {
 
     // Validate password confirmation
     if (password !== confirmPassword) {
-      alert("Confirmation password does not match!");
+      Swal.fire({
+        title: "Error",
+        text: "Confirmation password does not match!",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
       return;
     }
 
     try {
       await register(fullName, email, password, confirmPassword);
-      alert("Registration successful! Please log in.");
-      navigate("/login");
+      Swal.fire({
+        title: "Success!",
+        text: "Registration successful! Please log in.",
+        icon: "success",
+        confirmButtonText: "OK",
+      }).then(() => {
+        navigate("/login");
+      });
     } catch (error) {
-      alert(error.message || "Registration failed. Please try again.");
+      Swal.fire({
+        title: "Registration Failed",
+        text: error.message || "Registration failed. Please try again.",
+        icon: "error",
+      });
     }
   };
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import { login } from "../apis/api_auth"; // Import login function from api_auth.js
 
 const Login = () => {
@@ -24,16 +25,30 @@ const Login = () => {
         })
       );
 
-      alert("Login successful!");
-      if (data.role === "ADMIN") {
-        navigate("/admin");
-      } else if (data.role === "USER") {
-        navigate("/");
-      } else {
-        alert("Unknown role, please contact admin.");
-      }
+      Swal.fire({
+        title: "Success!",
+        text: "Login successful!",
+        icon: "success",
+        confirmButtonText: "OK",
+      }).then(() => {
+        if (data.role === "ADMIN") {
+          navigate("/admin");
+        } else if (data.role === "USER") {
+          navigate("/");
+        } else {
+          Swal.fire({
+            title: "Error",
+            text: "Unknown role, please contact admin.",
+            icon: "error",
+          });
+        }
+      });
     } catch (error) {
-      alert(error.message || "Login failed. Please try again.");
+      Swal.fire({
+        title: "Login Failed",
+        text: error.message || "Login failed. Please try again.",
+        icon: "error",
+      });
     }
   };
 
