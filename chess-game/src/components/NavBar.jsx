@@ -110,8 +110,8 @@ const NavBar = () => {
               <div className="absolute top-full left-0 mt-2 bg-gray-700 rounded shadow-lg w-40 z-50">
                 <button
                   onClick={() => {
-                    navigate("/play/friends");
-                    setIsPlayMenuOpen(false); // Đóng menu sau khi chọn
+                    window.dispatchEvent(new CustomEvent("openOnlineModal")); // 🔥 Fire event
+                    setIsPlayMenuOpen(false);
                   }}
                   className="flex items-center gap-3 w-full p-2 hover:bg-gray-600 rounded"
                 >

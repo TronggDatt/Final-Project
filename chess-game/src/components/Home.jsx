@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { validateByToken } from "../apis/api_auth";
 
@@ -47,6 +47,12 @@ const Home = () => {
       alert("Vui lòng nhập mã phòng hợp lệ!");
     }
   };
+
+  useEffect(() => {
+    const handleOpenModal = () => setShowModal(true);
+    window.addEventListener("openOnlineModal", handleOpenModal);
+    return () => window.removeEventListener("openOnlineModal", handleOpenModal);
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen items-center justify-center bg-gray-100">
