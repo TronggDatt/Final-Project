@@ -9,4 +9,12 @@ module.exports = {
     },
   },
   plugins: [],
+
+  darkMode: "class", // Kích hoạt chế độ dark mode theo class
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+  
 };
+
