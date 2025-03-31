@@ -9,6 +9,7 @@ export const register = async (fullName, email, password, confirmPassword) => {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify({ fullName, email, password, confirmPassword }),
     });
 
@@ -31,6 +32,7 @@ export const login = async (email, password) => {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify({ email, password }),
     });
 
