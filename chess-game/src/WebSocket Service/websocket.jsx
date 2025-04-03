@@ -16,7 +16,7 @@ export function connectWebSocket(
   messageCallback = onMessage;
   readyCallback = onReadyStatus;
 
-  const socket = new SockJS("http://localhost:8081/ws"); // nhớ sửa lại port nếu cần
+  const socket = new SockJS("http://localhost:8080/ws"); // nhớ sửa lại port nếu cần
   stompClient = new Client({
     webSocketFactory: () => socket,
     reconnectDelay: 5000,

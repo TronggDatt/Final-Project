@@ -20,8 +20,8 @@ import {
   disconnectWebSocket,
 } from "../WebSocket Service/websocket";
 
-const API_URL = "http://localhost:8081/games";
-const MOVE_API_URL = "http://localhost:8081/moves";
+const API_URL = "http://localhost:8080/games";
+const MOVE_API_URL = "http://localhost:8080/moves";
 
 // Lấy danh sách tất cả các ván cờ
 export const getAllGames = async () => {

@@ -24,21 +24,21 @@ const Home = () => {
     }
   };
 
-  const handleCreateRoom = async () => {
-    try {
-      const response = await fetch(
-        "http://localhost:8080/api/game/create-room",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-      const data = await response.json();
-      navigate(`/game/${data.roomCode}`);
-    } catch (error) {
-      console.error("Lỗi khi tạo phòng:", error);
-    }
-  };
+  // const handleCreateRoom = async () => {
+  //   try {
+  //     const response = await fetch(
+  //       "http://localhost:8080/api/game/create-room",
+  //       {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //       }
+  //     );
+  //     const data = await response.json();
+  //     navigate(`/game/${data.roomCode}`);
+  //   } catch (error) {
+  //     console.error("Lỗi khi tạo phòng:", error);
+  //   }
+  // };
 
   const handleJoinRoom = () => {
     if (roomCode.trim()) {
@@ -105,7 +105,7 @@ const Home = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg text-center">
             <h3 className="text-xl font-bold mb-4">Chơi Online</h3>
-          
+
             <input
               type="text"
               placeholder="Nhập mã phòng..."
