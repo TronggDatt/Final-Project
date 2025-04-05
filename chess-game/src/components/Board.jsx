@@ -1,14 +1,33 @@
 import React from "react";
 import Piece from "./Piece";
 
-const Board = ({ gameState, onSquareClick, validMoves = [] }) => {
+const Board = ({ gameState, onSquareClick, validMoves = [], playerColor }) => {
+  // Xác định hướng hiển thị bàn cờ dựa trên màu quân
+  const shouldFlipBoard = playerColor === "b"; // Đảo ngược bàn cờ nếu chơi quân đen
+
+  // console.log(
+  //   "Rendering board with playerColor:",
+  //   playerColor,
+  //   "shouldFlipBoard:",
+  //   shouldFlipBoard
+  // );
+
   function renderSquare(row, col) {
-    const key = `${col}${row}`;
+    // Tính toán vị trí thực tế dựa trên việc có đảo ngược bàn cờ hay không
+    const actualRow = shouldFlipBoard ? 9 - row : row;
+    const actualCol = shouldFlipBoard ? 8 - col : col;
+
+    // const key = `${col}${row}`;
+    const key = `${actualCol}${actualRow}`;
     const piece = gameState[key];
 
     const isValidMove =
+      // Array.isArray(validMoves) &&
+      // validMoves.some((move) => move.row === row && move.col === col);
       Array.isArray(validMoves) &&
-      validMoves.some((move) => move.row === row && move.col === col);
+      validMoves.some(
+        (move) => move.row === actualRow && move.col === actualCol
+      );
 
     return (
       <div
@@ -16,7 +35,7 @@ const Board = ({ gameState, onSquareClick, validMoves = [] }) => {
         className={`w-[10vw] h-[10vw] max-w-16 max-h-16 flex justify-center items-center relative ${
           isValidMove ? "bg-green-400 bg-opacity-50 rounded-lg shadow-md" : ""
         }`}
-        onClick={() => onSquareClick(row, col)}
+        onClick={() => onSquareClick(actualRow, actualCol)}
       >
         {piece && <Piece type={piece} />}
       </div>

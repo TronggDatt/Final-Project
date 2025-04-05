@@ -18,6 +18,7 @@ import {
   sendReadyState,
   sendChatMessage,
   disconnectWebSocket,
+  sendJoinRoom,
 } from "../WebSocket Service/websocket";
 
 const API_URL = "http://localhost:8080/games";
@@ -80,38 +81,38 @@ export const getMovesByGameId = async (gameId) => {
 };
 
 const INITIAL_GAME_STATE = {
-  "00": "xe_r",
-  10: "ma_r",
-  20: "tinh_r",
-  30: "sy_r",
-  40: "tuong_r",
-  50: "sy_r",
-  60: "tinh_r",
-  70: "ma_r",
-  80: "xe_r",
-  12: "phao_r",
-  72: "phao_r",
-  "03": "tot_r",
-  23: "tot_r",
-  43: "tot_r",
-  63: "tot_r",
-  83: "tot_r",
-  "06": "tot_b",
-  26: "tot_b",
-  46: "tot_b",
-  66: "tot_b",
-  86: "tot_b",
-  17: "phao_b",
-  77: "phao_b",
-  "09": "xe_b",
-  19: "ma_b",
-  29: "tinh_b",
-  39: "sy_b",
-  49: "tuong_b",
-  59: "sy_b",
-  69: "tinh_b",
-  79: "ma_b",
-  89: "xe_b",
+  "00": "xe_b",
+  10: "ma_b",
+  20: "tinh_b",
+  30: "sy_b",
+  40: "tuong_b",
+  50: "sy_b",
+  60: "tinh_b",
+  70: "ma_b",
+  80: "xe_b",
+  12: "phao_b",
+  72: "phao_b",
+  "03": "tot_b",
+  23: "tot_b",
+  43: "tot_b",
+  63: "tot_b",
+  83: "tot_b",
+  "06": "tot_r",
+  26: "tot_r",
+  46: "tot_r",
+  66: "tot_r",
+  86: "tot_r",
+  17: "phao_r",
+  77: "phao_r",
+  "09": "xe_r",
+  19: "ma_r",
+  29: "tinh_r",
+  39: "sy_r",
+  49: "tuong_r",
+  59: "sy_r",
+  69: "tinh_r",
+  79: "ma_r",
+  89: "xe_r",
 };
 
 class GameController extends React.Component {
@@ -133,14 +134,22 @@ class GameController extends React.Component {
       readyPlayers: [],
       status: "WAITING",
       countdown: 10,
+      players: [], // Danh sách người chơi trong phòng
+      playerColor: null,
+      joinAttempts: 0, // Số lần thử tham gia phòng
+      lastMoveBy: null,
+      readyButtonPulse: false, // Thêm trạng thái để tạo hiệu ứng nhấp nháy
     };
 
     this.moveAudio = new Audio(moveSound);
     this.captureAudio = new Audio(captureSound);
+    this.maxJoinAttempts = 5;
+    this.pulseInterval = null; // Biến để lưu interval của hiệu ứng nhấp nháy
   }
 
   componentDidMount() {
     this.startCountdown();
+    this.startReadyButtonPulse();
     const { gameId } = this.props;
     const email = localStorage.getItem("email");
     if (!gameId || !email) {
@@ -148,14 +157,125 @@ class GameController extends React.Component {
       return;
     }
 
+    // Kiểm tra xem game có tồn tại không
+    this.checkGameExists(gameId);
+
     connectWebSocket(
       gameId,
       this.handleMoveFromServer,
       this.handleReadyStatus,
-      this.handleReceiveChat
+      this.handleReceiveChat,
+      this.handlePlayerJoin
     );
     // console.log("🟢 Đang connect WebSocket với roomId:", gameId);
+    setTimeout(() => {
+      this.sendJoinRoomRequest();
+    }, 1000);
   }
+
+  // Bắt đầu hiệu ứng nhấp nháy cho nút Ready
+  startReadyButtonPulse = () => {
+    // Xóa interval cũ nếu có
+    if (this.pulseInterval) {
+      clearInterval(this.pulseInterval);
+    }
+
+    // Tạo interval mới để thay đổi trạng thái nhấp nháy
+    this.pulseInterval = setInterval(() => {
+      if (!this.state.isReady) {
+        // Chỉ nhấp nháy khi chưa ready
+        this.setState((prevState) => ({
+          readyButtonPulse: !prevState.readyButtonPulse,
+        }));
+      }
+    }, 1000); // Thay đổi mỗi 1 giây
+  };
+
+  // Kiểm tra xem game có tồn tại không
+  checkGameExists = async (gameId) => {
+    try {
+      const game = await getGameById(gameId);
+      if (!game) {
+        console.log(
+          "Game không tồn tại, sẽ được tạo tự động khi tham gia phòng"
+        );
+      } else {
+        console.log("Game đã tồn tại:", game);
+      }
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra game:", error);
+    }
+  };
+
+  // Gửi thông báo tham gia phòng
+  // sendJoinRoomRequest = () => {
+  //   const { gameId } = this.props;
+  //   const playerId = localStorage.getItem("email") || "unknown";
+  //   console.log("🔄 Gửi lại yêu cầu tham gia phòng:", gameId, playerId);
+  //   sendJoinRoom(gameId, playerId);
+  // };
+
+  // Gửi thông báo tham gia phòng
+  sendJoinRoomRequest = () => {
+    const { gameId } = this.props;
+    const playerId = localStorage.getItem("email") || "unknown";
+    const { joinAttempts } = this.state;
+
+    if (joinAttempts >= this.maxJoinAttempts) {
+      console.log("⚠️ Đã thử tham gia phòng quá nhiều lần, dừng lại");
+      this.setState({
+        error:
+          "Không thể tham gia phòng sau nhiều lần thử. Vui lòng tải lại trang.",
+      });
+      return;
+    }
+
+    console.log(
+      `🔄 Gửi yêu cầu tham gia phòng (lần ${joinAttempts + 1}):`,
+      gameId,
+      playerId
+    );
+    sendJoinRoom(gameId, playerId);
+
+    this.setState({ joinAttempts: joinAttempts + 1 });
+  };
+
+  // Xử lý sự kiện người chơi tham gia
+  handlePlayerJoin = (playerData) => {
+    console.log("🎮 Xử lý thông tin người chơi:", playerData);
+    const { players } = playerData;
+    const myEmail = localStorage.getItem("email") || "unknown";
+
+    if (!players || players.length === 0) {
+      console.log("❌ Danh sách người chơi trống, gửi lại yêu cầu tham gia");
+      // setTimeout(() => this.sendJoinRoomRequest(), 1000);
+      return;
+    }
+
+    // Cập nhật danh sách người chơi
+    this.setState({ players });
+
+    // Xác định màu quân của người chơi hiện tại
+    const myPlayerInfo = players.find((player) => player.id === myEmail);
+    if (myPlayerInfo && !this.state.playerColor) {
+      console.log("🎯 Tìm thấy thông tin người chơi:", myPlayerInfo);
+      this.setState({
+        playerColor: myPlayerInfo.color,
+      });
+
+      // Hiển thị thông báo về màu quân được gán
+      const colorName = myPlayerInfo.color === "r" ? "Đỏ" : "Đen";
+      Swal.fire({
+        icon: "info",
+        title: `Bạn chơi quân ${colorName}`,
+        text: `Trong ván cờ này, bạn sẽ điều khiển quân ${colorName}.`,
+      });
+    } else {
+      console.log(
+        "❌ Không tìm thấy thông tin người chơi hoặc không có màu quân"
+      );
+    }
+  };
 
   handleMoveFromServer = (message) => {
     const myEmail = localStorage.getItem("email");
@@ -196,6 +316,9 @@ class GameController extends React.Component {
 
     sendReadyState(this.state.gameId, playerId);
     // console.log("Gửi trạng thái READY:", this.state.gameId, playerId);
+
+    sendReadyState(this.props.gameId, playerId);
+    console.log("Gửi trạng thái READY:", this.props.gameId, playerId);
   };
 
   handleReceiveChat = (chatMessage) => {
@@ -217,6 +340,7 @@ class GameController extends React.Component {
     }
     disconnectWebSocket();
   }
+
   startCountdown = () => {
     this.countdownInterval = setInterval(() => {
       this.setState((prevState) => {
@@ -230,10 +354,39 @@ class GameController extends React.Component {
   };
 
   processMoveFromServer = (move) => {
-    const { gameState, currentPlayer } = this.state;
+    const { gameState, currentPlayer, lastMoveBy } = this.state;
     const fromKey = `${move.from.col}${move.from.row}`;
     const toKey = `${move.to.col}${move.to.row}`;
+
+    console.log("Nhận nước đi từ server:", fromKey, "->", toKey);
+
+    // Lấy thông tin người chơi từ move
+    const playerColor = move.playerId.endsWith("_r") ? "r" : "b";
+
+    // Kiểm tra xem có phải lượt của người chơi này không
+    if (playerColor !== currentPlayer) {
+      console.error(
+        "Không phải lượt của người chơi này:",
+        playerColor,
+        "vs",
+        currentPlayer
+      );
+      return;
+    }
+
+    // Kiểm tra xem người chơi này có phải là người vừa đi không
+    if (playerColor === lastMoveBy) {
+      console.error("Người chơi này vừa đi rồi:", playerColor);
+      return;
+    }
+
     const movingPiece = gameState[fromKey];
+    if (!movingPiece) {
+      console.error("Không tìm thấy quân cờ tại vị trí:", fromKey);
+      return;
+    }
+
+    // const movingPiece = gameState[fromKey];
     const newGameState = { ...gameState };
     delete newGameState[fromKey];
     const capturedPiece = newGameState[toKey];
@@ -274,6 +427,7 @@ class GameController extends React.Component {
       selectedPiece: null,
       validMoves: [],
       currentPlayer: nextPlayer,
+      lastMoveBy: currentPlayer,
       isCheck: check,
       isCheckmate: checkmate,
       moveHistory: [...this.state.moveHistory, newMove],
@@ -307,20 +461,33 @@ class GameController extends React.Component {
     }
   };
 
+  // sendMoveToServer = (from, to) => {
+  //   const { gameId } = this.state;
+  //   const move = {
+  //     from: { row: from.row, col: from.col },
+  //     to: { row: to.row, col: to.col },
+  //     piece: this.state.gameState[`${from.col}${from.row}`],
+  //     playerId: localStorage.getItem("email") || "unknown",
+  //   };
+  //   // console.log("Sending move:", move);
+  //   sendMove(gameId, move);
+  // };
+
   sendMoveToServer = (from, to) => {
-    const { gameId } = this.state;
+    const { gameId } = this.props;
+    const { playerColor } = this.state;
     const move = {
       from: { row: from.row, col: from.col },
       to: { row: to.row, col: to.col },
       piece: this.state.gameState[`${from.col}${from.row}`],
-      playerId: localStorage.getItem("email") || "unknown",
+      playerId: `${localStorage.getItem("email") || "unknown"}_${playerColor}`,
     };
-    // console.log("Sending move:", move);
     sendMove(gameId, move);
   };
 
   sendChatMessage = (message) => {
-    const { gameId } = this.state;
+    // const { gameId } = this.state;
+    const { gameId } = this.props;
     const playerId = localStorage.getItem("email") || "unknown";
 
     const chatPayload = {
@@ -333,7 +500,37 @@ class GameController extends React.Component {
   };
 
   handleSquareClick = (row, col) => {
-    const { selectedPiece, gameState, currentPlayer, isCheckmate } = this.state;
+    const {
+      selectedPiece,
+      gameState,
+      currentPlayer,
+      isCheckmate,
+      playerColor,
+      gameStarted,
+    } = this.state;
+
+    // Kiểm tra xem trò chơi đã bắt đầu chưa
+    if (!gameStarted) {
+      Swal.fire({
+        icon: "info",
+        title: "Trò chơi chưa bắt đầu!",
+        text: "Vui lòng đợi đủ người chơi và nhấn READY.",
+      });
+      return;
+    }
+
+    // Kiểm tra xem có phải lượt của người chơi hiện tại không
+    if (currentPlayer !== playerColor) {
+      Swal.fire({
+        icon: "warning",
+        title: "Không phải lượt của bạn!",
+        text: `Hiện tại là lượt của quân ${
+          currentPlayer === "r" ? "Đỏ" : "Đen"
+        }.`,
+      });
+      return;
+    }
+
     const key = `${col}${row}`;
     const clickedPiece = gameState[key];
 
@@ -346,9 +543,49 @@ class GameController extends React.Component {
       return;
     }
 
+    //   if (selectedPiece) {
+    //     if (clickedPiece && clickedPiece.endsWith(`_${currentPlayer}`)) {
+    //       const board = convertGameStateToBoard(gameState);
+    //       const validMoves = getValidMoves(board, { row, col }, clickedPiece);
+    //       if (validMoves.length === 0) {
+    //         Swal.fire({
+    //           icon: "info",
+    //           title: "Không có nước đi hợp lệ!",
+    //           text: "Hãy chọn quân khác.",
+    //         });
+    //         return;
+    //       }
+    //       this.setState({ selectedPiece: { row, col }, validMoves });
+    //       return;
+    //     }
+
+    //     if (this.movePiece(selectedPiece, { row, col })) {
+    //       this.sendMoveToServer(selectedPiece, { row, col });
+    //     }
+    //   } else if (clickedPiece && clickedPiece.endsWith(`_${currentPlayer}`)) {
+    //     const board = convertGameStateToBoard(gameState);
+    //     const validMoves = getValidMoves(board, { row, col }, clickedPiece);
+    //     this.setState({ selectedPiece: { row, col }, validMoves });
+    //   }
+    // };
+
     if (selectedPiece) {
+      const board = convertGameStateToBoard(gameState);
+      const selected = board[selectedPiece.row][selectedPiece.col];
+
+      // Không cho phép di chuyển quân không thuộc phe hiện tại
+      if (!selected.endsWith(`_${currentPlayer}`)) {
+        Swal.fire({
+          icon: "warning",
+          title: "Không thể điều khiển quân đối thủ!",
+          text: "Hãy chọn quân của bạn.",
+        });
+        return;
+      }
+
+      // Nếu click vào quân cùng phe => đổi quân đang chọn
+
       if (clickedPiece && clickedPiece.endsWith(`_${currentPlayer}`)) {
-        const board = convertGameStateToBoard(gameState);
         const validMoves = getValidMoves(board, { row, col }, clickedPiece);
         if (validMoves.length === 0) {
           Swal.fire({
@@ -362,6 +599,7 @@ class GameController extends React.Component {
         return;
       }
 
+      // Di chuyển quân đã chọn
       if (this.movePiece(selectedPiece, { row, col })) {
         this.sendMoveToServer(selectedPiece, { row, col });
       }
@@ -373,7 +611,7 @@ class GameController extends React.Component {
   };
 
   movePiece = (from, to) => {
-    const { gameState, validMoves, currentPlayer } = this.state;
+    const { gameState, validMoves, currentPlayer, lastMoveBy } = this.state;
     const fromKey = `${from.col}${from.row}`;
     const toKey = `${to.col}${to.row}`;
 
@@ -448,6 +686,7 @@ class GameController extends React.Component {
       selectedPiece: null,
       validMoves: [],
       currentPlayer: nextPlayer,
+      lastMoveBy: currentPlayer,
       isCheck: check,
       isCheckmate: checkmate,
       moveHistory: [...this.state.moveHistory, newMove],
@@ -476,7 +715,22 @@ class GameController extends React.Component {
       gameStarted,
       readyPlayers,
       status,
+      playerColor,
+      players,
+      readyButtonPulse,
     } = this.state;
+
+    // Xác định xem người chơi hiện tại có thể di chuyển quân không
+    const canMove = gameStarted && currentPlayer === playerColor;
+
+    // Xác định tên màu quân để hiển thị
+    const colorName =
+      playerColor === "r"
+        ? "Đỏ"
+        : playerColor === "b"
+        ? "Đen"
+        : "Chưa xác định";
+    const currentPlayerName = currentPlayer === "r" ? "Đỏ" : "Đen";
 
     return (
       <div className="flex flex-col lg:flex-row justify-center items-start gap-6 p-4 w-full">
@@ -484,9 +738,61 @@ class GameController extends React.Component {
         <div className="flex flex-col items-center w-full lg:w-2/3">
           {error && <p className="text-red-500 font-bold mb-2">{error}</p>}
 
-          <p className="text-lg font-bold mb-2">
+          {/* <p className="text-lg font-bold mb-2">
             Player: {currentPlayer === "r" ? "Red" : "Black"}
-          </p>
+          </p> */}
+
+          <div className="flex flex-col items-center mb-4">
+            <p className="text-lg font-bold">
+              Lượt chơi hiện tại:{" "}
+              <span
+                className={
+                  currentPlayer === "r" ? "text-red-600" : "text-gray-800"
+                }
+              >
+                {currentPlayerName}
+              </span>
+            </p>
+
+            <p className="text-md mt-1">
+              Bạn chơi quân:{" "}
+              <span
+                className={
+                  playerColor === "r"
+                    ? "text-red-600 font-bold"
+                    : playerColor === "b"
+                    ? "text-gray-800 font-bold"
+                    : "text-gray-500"
+                }
+              >
+                {colorName}
+              </span>
+            </p>
+
+            {canMove && (
+              <p className="text-green-600 font-bold mt-1">
+                Đến lượt bạn di chuyển!
+              </p>
+            )}
+
+            {players.length > 0 && (
+              <div className="mt-2 text-sm">
+                <p>Người chơi trong phòng ({players.length}/2):</p>
+                <ul className="list-disc pl-5">
+                  {players.map((player, index) => (
+                    <li
+                      key={index}
+                      className={
+                        player.color === "r" ? "text-red-600" : "text-gray-800"
+                      }
+                    >
+                      {player.id} {player.color === "r" ? "(Đỏ)" : "(Đen)"}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
 
           {isCheck && (
             <p className="text-red-500 font-bold">
@@ -504,14 +810,36 @@ class GameController extends React.Component {
             <div className="mb-4 text-center">
               <button
                 onClick={this.handleReady}
-                className={`relative px-6 py-2 rounded-full font-bold transition text-white text-sm uppercase tracking-wider shadow-md ${
+                className={`relative px-8 py-3 rounded-full font-bold text-white text-base uppercase tracking-wider shadow-lg ${
                   isReady
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-green-500 hover:bg-green-600"
+                    ? "bg-gray-500 cursor-not-allowed"
+                    : "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                }transition-all duration-300 transform ${
+                  readyButtonPulse && !isReady ? "scale-110" : "scale-100"
                 }`}
                 disabled={isReady}
               >
-                {isReady ? `READY (${this.state.countdown})` : "READY"}
+                {isReady ? (
+                  <>
+                    <span className="mr-2">READY</span>
+                    <span className="inline-flex items-center justify-center bg-white text-gray-800 rounded-full h-6 w-6 text-xs">
+                      {this.state.countdown}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    READY
+                    {/* Hiệu ứng hào quang */}
+                    <span className="absolute inset-0 rounded-full bg-green-400 opacity-30 animate-ping"></span>
+                    {/* Hiệu ứng thông báo */}
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-5 w-5 bg-red-600 text-xs text-white items-center justify-center">
+                        !
+                      </span>
+                    </span>
+                  </>
+                )}
               </button>
               <p className="mt-2 text-sm text-gray-600">
                 Trạng thái phòng: {status} | Người sẵn sàng:{" "}
@@ -525,6 +853,7 @@ class GameController extends React.Component {
               gameState={gameState}
               onSquareClick={this.handleSquareClick}
               validMoves={validMoves}
+              playerColor={playerColor}
             />
           </div>
         </div>
