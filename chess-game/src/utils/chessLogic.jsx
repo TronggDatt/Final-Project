@@ -98,8 +98,8 @@ const isValidKnightMove = (board, from, to) => {
 const isValidPawnMove = (piece, from, to) => {
   const color = piece.slice(-1); // 'r' hoặc 'b'
   const isRed = color === "r";
-  const forwardDirection = isRed ? 1 : -1; // Đỏ tiến xuống, Đen tiến lên
-  const riverBoundary = isRed ? 4 : 5; // Hàng sông
+  const forwardDirection = isRed ? -1 : 1; // Đỏ tiến lên, Đen tiến xuống
+  const riverBoundary = isRed ? 5 : 4; // Hàng sông
 
   // Tốt đi thẳng một bước
   if (to.row === from.row + forwardDirection && to.col === from.col) {
@@ -108,8 +108,8 @@ const isValidPawnMove = (piece, from, to) => {
 
   // Sau khi qua sông, Tốt có thể đi ngang một bước nhưng không được đi lùi
   if (
-    (isRed && from.row > riverBoundary) ||
-    (!isRed && from.row < riverBoundary)
+    (isRed && from.row < riverBoundary) ||
+    (!isRed && from.row > riverBoundary)
   ) {
     if (Math.abs(to.col - from.col) === 1 && to.row === from.row) {
       return true;
@@ -148,7 +148,7 @@ const isValidCannonMove = (board, from, to) => {
 const isValidElephantMove = (board, from, to, piece) => {
   const color = piece.slice(-1);
   const isRed = color === "r";
-  const riverBoundary = isRed ? 4 : 5;
+  const riverBoundary = isRed ? 5 : 4;
 
   // Kiểm tra đi chéo đúng 2 ô
   if (Math.abs(from.row - to.row) !== 2 || Math.abs(from.col - to.col) !== 2) {
@@ -156,7 +156,7 @@ const isValidElephantMove = (board, from, to, piece) => {
   }
 
   // Kiểm tra không qua sông
-  if ((isRed && to.row > riverBoundary) || (!isRed && to.row < riverBoundary)) {
+  if ((isRed && to.row < riverBoundary) || (!isRed && to.row > riverBoundary)) {
     return false;
   }
 
@@ -174,7 +174,7 @@ const isValidElephantMove = (board, from, to, piece) => {
 const isValidAdvisorMove = (from, to, piece) => {
   const color = piece.slice(-1);
   const isRed = color === "r";
-  const palaceRows = isRed ? [0, 1, 2] : [7, 8, 9];
+  const palaceRows = isRed ? [7, 8, 9] : [0, 1, 2];
   const palaceCols = [3, 4, 5];
 
   return (
@@ -189,7 +189,7 @@ const isValidAdvisorMove = (from, to, piece) => {
 const isValidKingMove = (board, from, to, piece) => {
   const color = piece.slice(-1);
   const palaceBounds =
-    color === "r" ? { rowMin: 0, rowMax: 2 } : { rowMin: 7, rowMax: 9 };
+    color === "r" ? { rowMin: 7, rowMax: 9 } : { rowMin: 0, rowMax: 2 };
   if (
     to.row < palaceBounds.rowMin ||
     to.row > palaceBounds.rowMax ||
