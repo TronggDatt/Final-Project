@@ -37,7 +37,7 @@ const Home = () => {
   const handlePlayWithBot = () => {
     // Lưu độ khó vào localStorage để sử dụng sau
     localStorage.setItem("botDifficulty", botDifficulty);
-    navigate(`/bot-game`);
+    navigate(`/play-bot`);
   };
 
   useEffect(() => {
