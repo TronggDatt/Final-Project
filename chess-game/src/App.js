@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import PlayPage from "./pages/PlayPage";
 import RegisterPage from "./pages/RegisterPage";
 import AboutPage from "./pages/AboutPage";
+import PlayBotPage from "./pages/PlayBotPage";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         </Route>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/play-bot" element={<PlayBotPage />} />
       </Routes>
     </Router>
   );

@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { validateByToken } from "../apis/api_auth";
-import GameController from "../components/GameController";
+"use client";
 
-const PlayPage = () => {
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { validateByToken } from "../apis/api_auth";
+import BotGame from "../components/BotGame"; // Import BotGame component
+
+const PlayBotPage = () => {
   const navigate = useNavigate();
-  const { gameId } = useParams();
   const [isPortrait, setIsPortrait] = useState(
     window.matchMedia("(orientation: portrait)").matches
   );
@@ -15,18 +16,22 @@ const PlayPage = () => {
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
+        // Chuyển hướng đến trang đăng nhập nếu không có token
         navigate("/login");
         return;
       }
 
       try {
         await validateByToken(token);
+        // Token hợp lệ, người dùng đã đăng nhập
       } catch (error) {
+        // Token không hợp lệ, xóa token và chuyển hướng đến trang đăng nhập
         localStorage.removeItem("token");
         navigate("/login");
       }
     };
 
+    // Kiểm tra xác thực khi component được mount
     checkAuth();
 
     // Lắng nghe thay đổi chiều màn hình
@@ -75,12 +80,12 @@ const PlayPage = () => {
         </div>
       )}
 
-      {/* GameController */}
+      {/* BotGame Component */}
       <div className="flex-1 p-4">
-        <GameController gameId={gameId} />
+        <BotGame /> {/* Render BotGame here */}
       </div>
     </div>
   );
 };
 
-export default PlayPage;
+export default PlayBotPage;

@@ -119,7 +119,7 @@ const NavBar = () => {
                 </button>
                 <button
                   onClick={() => {
-                    navigate("/play/computer");
+                    navigate("/play-bot");
                     setIsPlayMenuOpen(false); // Đóng menu sau khi chọn
                   }}
                   className="flex items-center gap-3 w-full p-2 hover:bg-gray-600 rounded"

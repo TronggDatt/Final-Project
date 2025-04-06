@@ -738,10 +738,6 @@ class GameController extends React.Component {
         <div className="flex flex-col items-center w-full lg:w-2/3">
           {error && <p className="text-red-500 font-bold mb-2">{error}</p>}
 
-          {/* <p className="text-lg font-bold mb-2">
-            Player: {currentPlayer === "r" ? "Red" : "Black"}
-          </p> */}
-
           <div className="flex flex-col items-center mb-4">
             <p className="text-lg font-bold">
               Lượt chơi hiện tại:{" "}
