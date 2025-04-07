@@ -10,12 +10,7 @@ class XiangqiAI:
     """Enhanced AI for Xiangqi (Chinese Chess)"""
 
     def __init__(self, difficulty="medium"):
-        """
-        Initialize the AI with a specified difficulty level.
 
-        Args:
-            difficulty: "easy", "medium", or "hard"
-        """
         self.difficulty = difficulty
         self.difficulty_settings = {
             "easy": {"depth": 2, "random_factor": 0.3, "time_limit": 1.0},

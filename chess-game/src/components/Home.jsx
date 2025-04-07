@@ -149,7 +149,6 @@ const Home = () => {
                 />
                 <span>Trung bình - Đối thủ có khả năng tốt</span>
               </label>
-
               <label className="flex items-center space-x-2 cursor-pointer">
                 <input
                   type="radio"
@@ -160,6 +159,19 @@ const Home = () => {
                   className="form-radio h-5 w-5 text-red-500"
                 />
                 <span>Khó - Thách thức cho người chơi giỏi</span>
+              </label>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="difficulty"
+                  value="expect"
+                  checked={botDifficulty === "expect"}
+                  onChange={() => setBotDifficulty("expect")}
+                  className="form-radio h-5 w-5 text-red-500"
+                />
+                <span>
+                  Chuyên gia - Thách thức cho người chơi chuyên gia phân tích
+                </span>
               </label>
             </div>
             <button

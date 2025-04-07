@@ -461,6 +461,7 @@ const BotGame = () => {
               <option value="easy">Dễ</option>
               <option value="medium">Trung bình</option>
               <option value="hard">Khó</option>
+              <option value="expert">Chuyên gia</option>
             </select>
 
             <button
