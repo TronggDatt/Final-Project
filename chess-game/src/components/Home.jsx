@@ -164,14 +164,36 @@ const Home = () => {
                 <input
                   type="radio"
                   name="difficulty"
-                  value="expect"
-                  checked={botDifficulty === "expect"}
-                  onChange={() => setBotDifficulty("expect")}
+                  value="expert"
+                  checked={botDifficulty === "expert"}
+                  onChange={() => setBotDifficulty("expert")}
                   className="form-radio h-5 w-5 text-red-500"
                 />
                 <span>
                   Chuyên gia - Thách thức cho người chơi chuyên gia phân tích
                 </span>
+              </label>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="difficulty"
+                  value="master"
+                  checked={botDifficulty === "master"}
+                  onChange={() => setBotDifficulty("master")}
+                  className="form-radio h-5 w-5 text-red-500"
+                />
+                <span>Bậc thầy - Thách thức cho người chơi bậc thầy</span>
+              </label>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="difficulty"
+                  value="genius"
+                  checked={botDifficulty === "genius"}
+                  onChange={() => setBotDifficulty("genius")}
+                  className="form-radio h-5 w-5 text-red-500"
+                />
+                <span>Thiên tài - Thách thức cho người chơi thiên tài</span>
               </label>
             </div>
             <button

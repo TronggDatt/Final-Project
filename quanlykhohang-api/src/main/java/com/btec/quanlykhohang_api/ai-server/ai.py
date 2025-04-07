@@ -16,7 +16,9 @@ class XiangqiAI:
             "easy": {"depth": 2, "random_factor": 0.3, "time_limit": 1.0},
             "medium": {"depth": 3, "random_factor": 0.15, "time_limit": 2.0},
             "hard": {"depth": 4, "random_factor": 0.05, "time_limit": 3.0},
-            "expert": {"depth": 5, "random_factor": 0.02, "time_limit": 5.0}
+            "expert": {"depth": 5, "random_factor": 0.02, "time_limit": 5.0},
+            "master": {"depth": 6, "random_factor": 0.01, "time_limit": 7.0},  # Tăng thêm độ sâu
+            "genius": {"depth": 7, "random_factor": 0.005, "time_limit": 10.0},  # Tăng thêm độ sâu
         }
 
         # Piece values for evaluation (improved values)
@@ -910,3 +912,116 @@ class XiangqiAI:
 
         return score
 
+def _negamax(self, game, depth, alpha, beta, is_quiescence, start_time, time_limit):
+    """Negamax algorithm with alpha-beta pruning and quiescence search"""
+    # Kiểm tra thời gian
+    if time.time() - start_time > time_limit:
+        return 0
+
+    # Lấy hash của trạng thái bàn cờ
+    position_hash = self._generate_position_hash(game)
+
+    # Kiểm tra bảng chuyển vị (transposition table)
+    if position_hash in self.transposition_table and self.transposition_table[position_hash]['depth'] >= depth:
+        tt_entry = self.transposition_table[position_hash]
+        if tt_entry['flag'] == 'exact':
+            return tt_entry['score']
+        elif tt_entry['flag'] == 'lower' and tt_entry['score'] > alpha:
+            alpha = tt_entry['score']
+        elif tt_entry['flag'] == 'upper' and tt_entry['score'] < beta:
+            beta = tt_entry['score']
+
+        if alpha >= beta:
+            return tt_entry['score']
+
+    # Kiểm tra các trạng thái kết thúc như chiếu hết
+    if game.is_checkmate(game.current_player):
+        return -10000  # Thua
+
+    if game.is_checkmate('r' if game.current_player == 'b' else 'b'):
+        return 10000  # Thắng
+
+    if depth <= 0:
+        return self.evaluate_position(game)
+
+    all_moves = self._get_sorted_moves(game)
+
+    if not all_moves:
+        return self.evaluate_position(game)
+
+    original_alpha = alpha
+    best_score = -float('inf')
+    best_move = None
+
+    # Thử từng nước đi
+    for from_pos, to_positions in all_moves.items():
+        for to_pos in to_positions:
+            temp_game = XiangqiGame()
+            temp_game.board = game.board.copy()
+            temp_game.current_player = game.current_player
+            temp_game.make_move(from_pos[0], from_pos[1], to_pos[0], to_pos[1])
+
+            score = -self._negamax(temp_game, depth - 1, -beta, -alpha, is_quiescence, start_time, time_limit)
+
+            if score > best_score:
+                best_score = score
+                alpha = max(alpha, best_score)
+
+            if alpha >= beta:
+                break
+
+    # Lưu kết quả vào bảng chuyển vị
+    if best_score <= original_alpha:
+        flag = 'upper'
+    elif best_score >= beta:
+        flag = 'lower'
+    else:
+        flag = 'exact'
+
+    self.transposition_table[position_hash] = {
+        'score': best_score,
+        'depth': depth,
+        'flag': flag,
+        'best_move': best_move
+    }
+
+    return best_score
+
+def _quiescence_search(self, game, alpha, beta, depth, max_depth, start_time, time_limit):
+    """Quiescence search to handle tactical sequences"""
+    # Kiểm tra thời gian
+    if time.time() - start_time > time_limit:
+        return 0
+
+    stand_pat = self.evaluate_position(game)
+
+    if depth >= max_depth:
+        return stand_pat
+
+    if stand_pat >= beta:
+        return beta
+
+    if stand_pat > alpha:
+        alpha = stand_pat
+
+    # Lấy các nước đi bắt quân
+    capturing_moves = self._get_capturing_moves(game)
+
+    # Thử từng nước đi bắt quân
+    for from_pos, to_positions in capturing_moves.items():
+        for to_pos in to_positions:
+            temp_game = XiangqiGame()
+            temp_game.board = game.board.copy()
+            temp_game.current_player = game.current_player
+            temp_game.make_move(from_pos[0], from_pos[1], to_pos[0], to_pos[1])
+
+            # Gọi quiescence tìm kiếm đệ quy
+            score = -self._quiescence_search(temp_game, -beta, -alpha, depth + 1, max_depth, start_time, time_limit)
+
+            if score > alpha:
+                alpha = score
+
+            if alpha >= beta:
+                return beta
+
+    return alpha

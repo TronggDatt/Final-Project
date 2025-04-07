@@ -49,12 +49,10 @@ const PlayBotPage = () => {
       {/* ❗ Portrait mode: Toggle slide NavBar */}
       {isPortrait && (
         <>
-          <button
+          {/* <button
             onClick={() => setShowNav(!showNav)}
             className="absolute top-4 left-4 z-50 bg-gray-800 text-white px-3 py-2 rounded shadow-md lg:hidden"
-          >
-            ☰ Menu
-          </button>
+          ></button> */}
 
           {showNav && (
             <div
