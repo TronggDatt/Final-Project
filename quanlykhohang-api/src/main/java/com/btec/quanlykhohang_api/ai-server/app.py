@@ -23,16 +23,16 @@ def init_game():
         'current_player': game.current_player
     })
 
+
 @app.route('/api/bot/move', methods=['POST'])
 def get_bot_move():
-    """Get a move from the AI bot"""
+    """Get a move from the AI bot."""
     data = request.json
     game_state = data.get('gameState')
     difficulty = data.get('difficulty', 'medium')
-    player = data.get('player', 'b')  # Default to black
+    player = data.get('player', 'b')
     game_id = data.get('game_id')
-    
-    # Use existing game or create a new one
+
     if game_id and game_id in active_games:
         game = active_games[game_id]
         game.board.load_game_state(game_state)
@@ -40,29 +40,48 @@ def get_bot_move():
         game = XiangqiGame(game_state)
         game_id = len(active_games) + 1
         active_games[game_id] = game
-    
-    # Set current player
+
     game.current_player = player
-    
-    # Create AI and get move
+
     ai = XiangqiAI(difficulty)
     from_pos, to_pos = ai.get_best_move(game)
-    
-    # Make the move
+
+    # Get the piece BEFORE making the move
     piece = game.board.get_piece(from_pos[0], from_pos[1])
+
+    # Validate that we have a valid piece
+    if piece is None:
+        # This is a defensive check - log the error and return a helpful message
+        print(f"ERROR: Attempted to move a null piece from {from_pos} to {to_pos}")
+        print(f"Current game state: {game_state}")
+        return jsonify({
+            'error': 'Invalid move: No piece at the starting position',
+            'details': {
+                'from_pos': from_pos,
+                'to_pos': to_pos,
+                'current_player': player
+            }
+        }), 400
+
+    # Make the move after validating the piece
     game.make_move(from_pos[0], from_pos[1], to_pos[0], to_pos[1])
-    
-    # Return the move and updated game state
-    return jsonify({
-        'game_id': game_id,
-        'from': {'row': from_pos[0], 'col': from_pos[1]},
-        'to': {'row': to_pos[0], 'col': to_pos[1]},
-        'piece': piece,
-        'game_state': game.board.to_game_state(),
-        'current_player': game.current_player,
-        'is_check': game.is_king_in_check(game.current_player),
-        'is_checkmate': game.is_checkmate(game.current_player)
-    })
+
+    # Wrap the response in a data property to match frontend expectations
+    response_data = {
+        'data': {
+            'game_id': game_id,
+            'from': {'row': from_pos[0], 'col': from_pos[1]},
+            'to': {'row': to_pos[0], 'col': to_pos[1]},
+            'piece': piece,  # This should now never be null
+            'game_state': game.board.to_game_state(),
+            'current_player': game.current_player,
+            'is_check': game.is_king_in_check(game.current_player),
+            'is_checkmate': game.is_checkmate(game.current_player)
+        }
+    }
+
+    return jsonify(response_data)
+
 
 @app.route('/api/bot/difficulty', methods=['GET'])
 def get_difficulty_levels():

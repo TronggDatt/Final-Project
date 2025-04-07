@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import Board from "./Board";
 import ChatBox from "./ChatBox";
@@ -113,6 +111,7 @@ const BotGame = () => {
     }
   };
 
+  // Remove the standalone "use client" directive from line 114
   const getBotMove = async () => {
     setBotThinking(true);
     setLoading(true);
@@ -128,98 +127,29 @@ const BotGame = () => {
         game_id: gameId,
       });
 
-      console.log("Full API response:", response);
+      // console.log("Full API response:", response);
 
-      if (!response.data) {
-        console.error("API response missing data property:", response);
-
-        // Try to find the move data in the response itself
-        // This is a fallback in case the API returns data directly without nesting it in a 'data' property
-        if (response.from && response.to && response.piece) {
-          console.log("Found move data directly in response object");
-          // Use the response object directly
-          const { from, to, piece } = response;
-
-          // Process the move
-          const fromKey = `${from.col}${from.row}`;
-          const toKey = `${to.col}${to.row}`;
-
-          // Make the move
-          const newGameState = { ...gameState };
-          delete newGameState[fromKey];
-          const capturedPiece = newGameState[toKey];
-          newGameState[toKey] = piece;
-
-          // Update game state
-          setGameState(newGameState);
-          setSelectedPiece(null);
-          setValidMoves([]);
-
-          // Switch player
-          setCurrentPlayer(playerColor);
-
-          // Check for check and checkmate
-          const board = convertGameStateToBoard(newGameState);
-          const check = isKingInCheck(board, playerColor);
-          const checkmate = isCheckmateFunc(board, playerColor);
-
-          setIsCheck(check);
-          setIsCheckmate(checkmate);
-
-          // Update move history
-          const newMove = {
-            redMove:
-              currentPlayer === "r" ? `${piece} (${fromKey} -> ${toKey})` : "",
-            blackMove:
-              currentPlayer === "b" ? `${piece} (${fromKey} -> ${toKey})` : "",
-          };
-          setMoveHistory([...moveHistory, newMove]);
-
-          // Play sound
-          if (capturedPiece) {
-            captureAudio.play();
-          } else {
-            moveAudio.play();
-          }
-
-          // Add bot message to chat
-          setChatMessages([
-            ...chatMessages,
-            {
-              senderId: "Bot",
-              content: `Tôi đã di chuyển ${piece} từ ${fromKey} đến ${toKey}${
-                capturedPiece ? ` và bắt quân ${capturedPiece}` : ""
-              }`,
-            },
-          ]);
-
-          // Check for check and checkmate notifications
-          if (check) {
-            Swal.fire({
-              icon: "warning",
-              title: "Cảnh báo!",
-              text: "Tướng của bạn đang bị chiếu!",
-            });
-          }
-
-          if (checkmate) {
-            Swal.fire({
-              icon: "info",
-              title: "Chiếu bí!",
-              text: "Bot đã thắng ván cờ!",
-            });
-          }
-
-          // Exit the function early since we've handled the move
-          setBotThinking(false);
-          setLoading(false);
-          return;
-        }
-
-        throw new Error("Invalid API response format: Missing data property");
+      // Check for error in the response
+      if (response.error) {
+        throw new Error(`Server error: ${response.error}`);
       }
 
-      const { from, to, piece } = response.data;
+      // Handle the data property
+      const moveData = response.data || response;
+
+      // Validate that we have the necessary move information
+      if (!moveData.from || !moveData.to || !moveData.piece) {
+        console.error("Invalid move data:", moveData);
+        throw new Error("Invalid move data received from server");
+      }
+
+      const { from, to, piece } = moveData;
+
+      // Additional validation to ensure piece is not null
+      if (!piece) {
+        console.error("Received null piece in move:", moveData);
+        throw new Error("Bot attempted to move a null piece");
+      }
 
       // Process the move
       const fromKey = `${from.col}${from.row}`;
@@ -307,11 +237,15 @@ const BotGame = () => {
         // Something happened in setting up the request that triggered an Error
         errorMessage += ` Lỗi: ${error.message}`;
       }
+
       Swal.fire({
         icon: "error",
         title: "Lỗi",
         text: errorMessage,
       });
+
+      // Reset the game to a valid state if there was an error
+      initGame();
     } finally {
       setBotThinking(false);
       setLoading(false);
@@ -391,7 +325,7 @@ const BotGame = () => {
 
     // Check for check and checkmate
     const check = isKingInCheck(board, currentPlayer === "r" ? "b" : "r");
-    console.log(isCheckmate);
+    // console.log(isCheckmate);
     const checkmate = isCheckmateFunc(board, currentPlayer === "r" ? "b" : "r");
 
     setIsCheck(check);

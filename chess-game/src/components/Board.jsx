@@ -5,13 +5,6 @@ const Board = ({ gameState, onSquareClick, validMoves = [], playerColor }) => {
   // Xác định hướng hiển thị bàn cờ dựa trên màu quân
   const shouldFlipBoard = playerColor === "b"; // Đảo ngược bàn cờ nếu chơi quân đen
 
-  // console.log(
-  //   "Rendering board with playerColor:",
-  //   playerColor,
-  //   "shouldFlipBoard:",
-  //   shouldFlipBoard
-  // );
-
   function renderSquare(row, col) {
     // Tính toán vị trí thực tế dựa trên việc có đảo ngược bàn cờ hay không
     const actualRow = shouldFlipBoard ? 9 - row : row;
@@ -22,8 +15,6 @@ const Board = ({ gameState, onSquareClick, validMoves = [], playerColor }) => {
     const piece = gameState[key];
 
     const isValidMove =
-      // Array.isArray(validMoves) &&
-      // validMoves.some((move) => move.row === row && move.col === col);
       Array.isArray(validMoves) &&
       validMoves.some(
         (move) => move.row === actualRow && move.col === actualCol
