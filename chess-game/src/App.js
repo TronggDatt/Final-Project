@@ -8,6 +8,8 @@ import {
 import React from "react";
 import Layout from "./components/Layout";
 import HomePage from "./pages/HomePage";
+import UserProfile from "./pages/UserProfile";
+import EditProfile from "./pages/EditProfile";
 import LoginPage from "./pages/LoginPage";
 import PlayPage from "./pages/PlayPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -22,6 +24,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/game/:gameId" element={<PlayPage />} />
+          <Route path="/profile" element={<UserProfile />} />
+          <Route path="/edit-profile" element={<EditProfile />} />
         </Route>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

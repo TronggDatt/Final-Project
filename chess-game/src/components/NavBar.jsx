@@ -145,7 +145,10 @@ const NavBar = () => {
           {isLogin ? (
             <div className="border-t border-gray-600 pt-4">
               <p className="text-center text-sm">
-                Hello, <b>{user?.fullname || user?.email}</b>
+                Hello,{" "}
+                <Link to="/profile" className="text-blue-500">
+                  {user?.fullname || user?.email}
+                </Link>
               </p>
               <button
                 onClick={handleLogout}
